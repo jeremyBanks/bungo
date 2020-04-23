@@ -6,13 +6,16 @@
   "author": "Jeremy Banks <_@jeremy.ca>",
   "license": "MIT",
   "scripts": {
-    "start": "(cd src; rome run index.ts)"
+    "bungo": "tsc --noEmit && (cd src && rome run index.ts \"$@\")",
+    "build": "tsc --noEmit && (cd src && rome compile index.ts --bundle | dd bs=1 skip=16 > ../dist/index.js)",
+    "lint": "tsc --noEmit && (cd src && rome lint index.ts)",
+    "full-bungo": "yarn lint; yarn build && echo && node dist/index.js \"$@\""
   },
   "dependencies": {
-    "typescript": "^3.8.3"
   },
   "devDependencies": {
     "prettier": "^2.0.5",
-    "rome": "./node_modules/rome"
+    "rome": "./node_modules/rome",
+    "typescript": "^3.8.3"
   }
 }
