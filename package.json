@@ -1,8 +1,18 @@
 {
   "name": "bungo",
-  "version": "0.0.1",
+  "version": "0.0.150",
   "description": "i know it's my destiny",
   "repository": "git@github.com:jeremyBanks/bungo.git",
   "author": "Jeremy Banks <_@jeremy.ca>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "start": "(cd src; rome run index.ts)"
+  },
+  "dependencies": {
+    "typescript": "^3.8.3"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5",
+    "rome": "./node_modules/rome"
+  }
 }
