@@ -1,2 +1,3 @@
 # bungo
-prettier for files for me
+
+i know it's my destiny
