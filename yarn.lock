@@ -2,25 +2,12 @@
 # yarn lockfile v1
 
 
-"@romejs/js-parser@./vendor/rome/packages/@romejs/js-parser":
-  version "0.0.0"
-  dependencies:
-    unicode-10.0.0 "^0.7.4"
-
-prettier@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.0.5.tgz#d6d56282455243f2f92cc1716692c08aa31522d4"
-  integrity sha512-7PtVymN48hGcO4fGjybyBSIWDsLU4H4XlvOHfq91pz9kkGlonzwTfYkaIEwiRg/dAJF9YlbsduBAgtYLi+8cFg==
-
-rome@./vendor/rome/dist:
-  version "0.0.0"
+"@types/node@^13.13.2":
+  version "13.13.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.2.tgz#160d82623610db590a64e8ca81784e11117e5a54"
+  integrity sha512-LB2R1Oyhpg8gu4SON/mfforE525+Hi/M1ineICEDftqNVTyFg1aRIeGuTvXAoWHc4nbrFncWtJgMmoyRvuGh7A==
 
 typescript@^3.8.3:
   version "3.8.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.8.3.tgz#409eb8544ea0335711205869ec458ab109ee1061"
   integrity sha512-MYlEfn5VrLNsgudQTVJeNaQFUAI7DkhnOjdpAp4T+ku1TfQClewlbSuTVHiA+8skNBgaf02TL/kLOvig4y3G8w==
-
-unicode-10.0.0@^0.7.4:
-  version "0.7.5"
-  resolved "https://registry.yarnpkg.com/unicode-10.0.0/-/unicode-10.0.0-0.7.5.tgz#7f67a1fb5cb295db843e91180fe63aa6241b312c"
-  integrity sha512-4JjDaIBz3GqgVSnWS+3RriWCdKDj2QH14C2K4XRpuWqhvKMgd8uWT42ZG/Xlyh7QxXSptsCEWydu41KrFYUfiw==

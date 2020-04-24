@@ -1,22 +1,16 @@
 {
   "name": "bungo",
-  "version": "0.0.150",
+  "version": "0.0.151",
   "description": "i know it's my destiny",
   "repository": "git@github.com:jeremyBanks/bungo.git",
   "author": "Jeremy Banks <_@jeremy.ca>",
   "license": "MIT",
   "scripts": {
-    "bungo": "cd src && rome run index.ts \"$@\"",
-    "build": "tsc --noEmit && (cd src && rome compile index.ts --bundle | dd bs=1 skip=16 > ../dist/index.js)",
-    "lint": "tsc --noEmit && (cd src && rome lint index.ts)",
-    "full-bungo": "yarn lint; yarn build && echo && node dist/index.js \"$@\""
-  },
-  "dependencies": {
+    "rome": "node vendor/rome/scripts/dev-rome \"$@\"",
+    "bungo": "yarn rome run src/index.ts \"$@\""
   },
   "devDependencies": {
-    "prettier": "^2.0.5",
-    "rome": "./vendor/rome/dist",
-    "@romejs/js-parser": "./vendor/rome/packages/@romejs/js-parser",
+    "@types/node": "^13.13.2",
     "typescript": "^3.8.3"
   }
 }
