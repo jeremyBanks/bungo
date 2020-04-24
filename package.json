@@ -6,7 +6,7 @@
   "author": "Jeremy Banks <_@jeremy.ca>",
   "license": "MIT",
   "scripts": {
-    "bungo": "tsc --noEmit && (cd src && rome run index.ts \"$@\")",
+    "bungo": "cd src && rome run index.ts \"$@\"",
     "build": "tsc --noEmit && (cd src && rome compile index.ts --bundle | dd bs=1 skip=16 > ../dist/index.js)",
     "lint": "tsc --noEmit && (cd src && rome lint index.ts)",
     "full-bungo": "yarn lint; yarn build && echo && node dist/index.js \"$@\""
@@ -15,7 +15,8 @@
   },
   "devDependencies": {
     "prettier": "^2.0.5",
-    "rome": "./node_modules/rome",
+    "rome": "./vendor/rome/dist",
+    "@romejs/js-parser": "./vendor/rome/packages/@romejs/js-parser",
     "typescript": "^3.8.3"
   }
 }

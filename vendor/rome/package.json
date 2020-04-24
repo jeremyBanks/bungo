@@ -1,0 +1,57 @@
+{
+  "name": "rome-root",
+  "license": "MIT",
+  "version": "0.0.2-git2baf939c2c54157b4c8da209108f4b3a9d63d794",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "//": "Look! No deps!",
+  "dependencies": {},
+  "///": "Only used for static type checking",
+  "devDependencies": {
+    "@types/vscode": "^1.43.0",
+    "@types/node": "^13.7.7",
+    "@types/react": "^16.8.23",
+    "@types/react-dom": "^16.8.5",
+    "typescript": "^3.7.0"
+  },
+  "romeLSPBin": "./scripts/vendor-rome",
+  "scripts": {
+    "dev-rome": "node ./scripts/dev-rome",
+    "test": "node ./scripts/dev-rome test",
+    "lint": "node ./scripts/dev-rome lint",
+    "fix": "node ./scripts/dev-rome --fix"
+  },
+  "rome": {
+    "root": true,
+    "bundler": {
+      "mode": "modern"
+    },
+    "tests": {
+      "enabled": true
+    },
+    "format": {
+      "enabled": true
+    },
+    "lint": {
+      "enabled": true,
+      "ignore": [
+        "build",
+        "coverage",
+        "flow-typed",
+        "node_modules",
+        "core/static",
+        "resources",
+        "test-fixtures",
+        "vendor",
+        "type-libs",
+        "lib/modules.js",
+        "prelude.ts",
+        "website",
+        "@romejs-web",
+        "out",
+        "vscode/node_modules"
+      ]
+    }
+  }
+}
