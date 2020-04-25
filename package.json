@@ -9,17 +9,23 @@
   "author": "Jeremy Banks <_@jeremy.ca>",
   "license": "MIT",
   "private": true,
-  "type": "module",
   "scripts": {
-    "bungo": "vendor/rome/scripts/dev-rome run src/bungo.ts \"$@\"",
+    "bungo": "(yarn build-bungo || yarn build) && node ./.dist/index.js \"$@\"",
+    "build": "yarn build-rome && yarn build-bungo",
+    "build-rome": "vendor/rome/scripts/build-release node_modules/rome && yarn add --force ./node_modules/rome",
+    "build-bungo": "yarn rome bundle src/bungo.ts .dist/",
     "update-rome": "cd vendor && rm -rf rome && git clone --depth 1 https://github.com/facebookexperimental/rome && rm -rf rome/.git"
   },
   "devDependencies": {
     "@types/node": "^13.13.2",
-    "prettier": "^2.0.5",
-    "@types/vscode": "^1.43.0",
     "@types/react": "^16.8.23",
     "@types/react-dom": "^16.8.5",
+    "@types/vscode": "^1.43.0",
+    "prettier": "^2.0.5",
+    "rome": "./node_modules/rome",
     "typescript": "^3.7.0"
+  },
+  "rome": {
+    "root": true
   }
 }

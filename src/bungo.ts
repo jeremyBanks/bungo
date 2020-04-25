@@ -5,8 +5,27 @@ import {
   createUnknownFilePath,
   CWD_PATH
 } from "@romejs/path/index";
+import { parseCLIFlagsFromProcess } from '@romejs/cli-flags';
 
 export const main = async (): Promise<undefined | number | void> => {
+  const parser = parseCLIFlagsFromProcess({
+    programName: 'bungo',
+    usage: '[flags] [args]',
+    defineFlags(c): {
+      rootPath?: AbsoluteFilePath,
+    } {
+      return {
+        rootPath: CWD_PATH.resolve(c.get('root').asString("."))
+      };
+    }
+  });
+  const flags = await parser.init();
+  const args = parser.getArgs();
+  if (args.length > 0) {
+    console.error(`I don't want your arguments (${args})`);
+    return 1;
+  }
+
   const rootPath = CWD_PATH.resolve("src");
   console.log(`if we were using real data it would come from ${rootPath}`);
 
