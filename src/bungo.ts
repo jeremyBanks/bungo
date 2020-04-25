@@ -2,7 +2,7 @@ import { CWD_PATH } from "@romejs/path/index";
 import { parseCLIFlagsFromProcess } from "@romejs/cli-flags";
 
 import packageJson from "../package.json";
-import { bungo } from "./bungo/logic";
+import { ProjectGraph } from "./bungo/project-graph";
 
 export const main = async (): Promise<undefined | number | void> => {
   const parser = parseCLIFlagsFromProcess({
@@ -27,7 +27,11 @@ export const main = async (): Promise<undefined | number | void> => {
     return 1;
   }
 
-  await bungo();
+  console.log(ProjectGraph);
+
+  console.log("run tests instead");
+
+  return 0;
 };
 
 main().then(() => process.exit());
