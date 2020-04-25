@@ -10,21 +10,9 @@ import {
 } from "@romejs/path/index";
 import { parseCLIFlagsFromProcess } from '@romejs/cli-flags';
 
-export const main = async (): Promise<undefined | number> => {
-  const flags = await parseCLIFlagsFromProcess({
-    programName: 'bungo',
-    defineFlags(c): {
-      rootPath?: AbsoluteFilePath
-    } {
-      return {
-        rootPath: CWD_PATH.resolve(c.get('root').asString("."))
-      };
-    },
-  }).init();
-
-  console.log(flags);
-
-  process.exit(1);
+export const main = async (): Promise<undefined | number | void> => {
+  const rootPath = CWD_PATH.resolve("src");
+  console.log(`if we were using real data it would come from ${rootPath}`);
 
   const input = {
     root: "/home/user/src/",
@@ -94,8 +82,6 @@ export const main = async (): Promise<undefined | number> => {
   >;
 
   console.log(files);
-
-  return;
 };
 
 const parseModule = (input: string, path: string = "module.ts") =>

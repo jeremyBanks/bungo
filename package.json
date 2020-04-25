@@ -11,14 +11,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "bungo": "vendor/rome/scripts/dev-rome run src/bungo.ts \"$@\"",
-    "build": "tsc || true; vendor/rome/scripts/dev-rome compile src/bungo.ts | pcregrep -oM '(import|export)(.|\\n)*$' | tee dist/bungo.js",
-    "built-bungo": "node dist/bungo.js"
-  },
-  "dependencies": {
-    "@romejs/js-parser": "./vendor/rome/packages/@romejs/js-parser",
-    "@romejs/path": "./vendor/rome/packages/@romejs/path",
-    "@romejs/cli-flags": "./vendor/rome/packages/@romejs/cli-flags"
+    "bungo": "vendor/rome/scripts/dev-rome run src/bungo.ts \"$@\""
   },
   "devDependencies": {
     "@types/node": "^13.13.2",
