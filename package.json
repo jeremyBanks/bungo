@@ -10,11 +10,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "bungo": "(yarn build-bungo || yarn build) && node ./.dist/index.js \"$@\"",
-    "build": "yarn build-rome && yarn build-bungo",
-    "build-rome": "vendor/rome/scripts/build-release node_modules/rome && yarn add --force ./node_modules/rome",
-    "build-bungo": "yarn rome bundle src/bungo.ts .dist/",
-    "update-rome": "cd vendor && rm -rf rome && git clone --depth 1 https://github.com/facebookexperimental/rome && rm -rf rome/.git"
+    "bungo": "yarn build && node ./.dist/index.js \"$@\"",
+    "sunrise": "yarn update-rome && yarn build-rome && git add --force ./node_modules/rome && yarn build && yarn bungo --help",
+    "build": "yarn rome bundle src/bungo.ts ./.dist/",
+    "build-rome": "./vendor/rome/scripts/build-release ./node_modules/rome && yarn add --force ./node_modules/rome",
+    "update-rome": "cd ./vendor && rm -rf ./rome && git clone --depth 3 https://github.com/facebookexperimental/rome && cd ./rome && git log --decorate --graph | tee ./HEAD.txt && rm -rf ./.git"
   },
   "devDependencies": {
     "@types/node": "^13.13.2",

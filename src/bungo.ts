@@ -12,7 +12,7 @@ export const main = async (): Promise<undefined | number | void> => {
     programName: 'bungo',
     usage: '[flags] [args]',
     defineFlags(c): {
-      rootPath?: AbsoluteFilePath,
+      rootPath: AbsoluteFilePath,
     } {
       return {
         rootPath: CWD_PATH.resolve(c.get('root').asString("."))
@@ -26,8 +26,7 @@ export const main = async (): Promise<undefined | number | void> => {
     return 1;
   }
 
-  const rootPath = CWD_PATH.resolve("src");
-  console.log(`if we were using real data it would come from ${rootPath}`);
+  console.log(`if we were using real data it would come from ${flags.rootPath}`);
 
   const input = {
     root: "/home/jeremy/src/",
