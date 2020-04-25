@@ -11,24 +11,24 @@ import {
 } from '../common/types/client';
 import {JSONFileReference} from '../common/types/files';
 import {
-  DiagnosticLocation,
-  getDiagnosticsFromError,
-  DiagnosticAdvice,
-  DiagnosticsError,
-  DiagnosticCategory,
   Diagnostic,
-  DiagnosticsProcessor,
-  Diagnostics,
+  DiagnosticAdvice,
+  DiagnosticCategory,
   DiagnosticDescription,
+  DiagnosticLocation,
+  Diagnostics,
+  DiagnosticsError,
+  DiagnosticsProcessor,
   descriptions,
+  getDiagnosticsFromError,
 } from '@romejs/diagnostics';
 import {
-  DiagnosticsPrinterFlags,
   DiagnosticsPrinter,
+  DiagnosticsPrinterFlags,
 } from '@romejs/cli-diagnostics';
 import {
+  ProjectConfigCategoriesWithIgnore,
   ProjectDefinition,
-  ProjectConfigCategoriesWithIgnoreAndEnabled,
 } from '@romejs/project';
 import {ResolverOptions} from './fs/Resolver';
 import {BundlerConfig} from '../common/types/bundler';
@@ -47,30 +47,30 @@ import {
   EventSubscription,
   mergeEventSubscriptions,
 } from '@romejs/events';
-import {serializeCLIFlags, SerializeCLITarget} from '@romejs/cli-flags';
+import {SerializeCLITarget, serializeCLIFlags} from '@romejs/cli-flags';
 import {Program} from '@romejs/js-ast';
 import {TransformStageName} from '@romejs/js-compiler';
 import WorkerBridge, {
   PrefetchedModuleSignatures,
   WorkerAnalyzeDependencyResult,
   WorkerCompileResult,
-  WorkerParseOptions,
   WorkerCompilerOptions,
   WorkerFormatResult,
-  WorkerLintResult,
   WorkerLintOptions,
+  WorkerLintResult,
+  WorkerParseOptions,
 } from '../common/bridges/WorkerBridge';
 import {ModuleSignature} from '@romejs/js-analysis';
 import {
   AbsoluteFilePath,
-  createAbsoluteFilePath,
   AbsoluteFilePathSet,
+  createAbsoluteFilePath,
   createUnknownFilePath,
 } from '@romejs/path';
 import crypto = require('crypto');
 import {createErrorFromStructure, getErrorStructure} from '@romejs/v8';
 import {Dict, RequiredProps} from '@romejs/typescript-helpers';
-import {ob1Number1, ob1Number0, ob1Coerce0} from '@romejs/ob1';
+import {ob1Coerce0, ob1Number0, ob1Number1} from '@romejs/ob1';
 import {MemoryFSGlobOptions} from './fs/MemoryFileSystem';
 import {markup} from '@romejs/string-markup';
 import {
@@ -100,14 +100,15 @@ type ResolvedArg = {
 
 type ResolvedArgs = Array<ResolvedArg>;
 
-export type MasterRequestGetFilesOptions = Omit<MemoryFSGlobOptions,
-  | 'getProjectIgnore'
-  | 'getProjectEnabled'> & {
+export type MasterRequestGetFilesOptions = Omit<
+  MemoryFSGlobOptions,
+  'getProjectIgnore'
+> & {
   ignoreArgumentMisses?: boolean;
   ignoreProjectIgnore?: boolean;
   disabledDiagnosticCategory?: DiagnosticCategory;
   advice?: DiagnosticAdvice;
-  configCategory?: ProjectConfigCategoriesWithIgnoreAndEnabled;
+  configCategory?: ProjectConfigCategoriesWithIgnore;
   verb?: string;
   noun?: string;
   args?: Array<string>;
@@ -597,9 +598,6 @@ export default class MasterRequest {
     const extendedGlobOpts: MemoryFSGlobOptions = {...opts};
 
     if (configCategory !== undefined) {
-        extendedGlobOpts.getProjectEnabled =
-        (project) => project.config[configCategory].enabled;
-
       extendedGlobOpts.getProjectIgnore = (project) => ignoreProjectIgnore
         ? []
         : project.config[configCategory].ignore;
@@ -633,54 +631,6 @@ export default class MasterRequest {
         let advice: DiagnosticAdvice = opts.advice === undefined
           ? []
           : [...opts.advice];
-
-        // Hint if `path` failed `globOpts.test`
-        if (configCategory !== undefined &&
-            !project.config[configCategory].enabled) {
-          const enabledSource = master.projectManager.findProjectConfigConsumer(
-            project,
-            (consumer) => consumer.has(configCategory) && consumer.get(
-              configCategory,
-            ).get('enabled'),
-          );
-
-          const explanationPrefix = opts.verb === undefined
-            ? 'Files excluded'
-            : `Files excluded from ${opts.verb}`;
-
-          if (opts.disabledDiagnosticCategory !== undefined) {
-            category = opts.disabledDiagnosticCategory;
-          }
-
-          if (enabledSource.value === undefined) {
-            let explanation = `${explanationPrefix} as it's not enabled for this project`;
-            if (configCategory !== undefined) {
-                explanation +=
-                `. Run <command>rome config enable-category ${configCategory}</command> to enable it.`;
-            }
-            advice.push({
-              type: 'log',
-              category: 'info',
-              message: explanation,
-            });
-          } else {
-            advice.push(
-              {
-                type: 'log',
-                category: 'info',
-                message: `${explanationPrefix} as it's explicitly disabled in this project config`,
-              },
-            );
-
-            const disabledPointer = enabledSource.value.getDiagnosticLocation(
-              'value',
-            );
-            advice.push({
-              type: 'frame',
-              location: disabledPointer,
-            });
-          }
-        }
 
         // Hint if all files were ignored
         if (configCategory !== undefined && !ignoreProjectIgnore) {

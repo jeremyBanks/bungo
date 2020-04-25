@@ -11,7 +11,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "bungo": "vendor/rome/scripts/dev-rome run src/bungo.ts \"$@\""
+    "bungo": "vendor/rome/scripts/dev-rome run src/bungo.ts \"$@\"",
+    "update-rome": "cd vendor && rm -rf rome && git clone --depth 1 https://github.com/facebookexperimental/rome && rm -rf rome/.git"
   },
   "devDependencies": {
     "@types/node": "^13.13.2",
@@ -20,20 +21,5 @@
     "@types/react": "^16.8.23",
     "@types/react-dom": "^16.8.5",
     "typescript": "^3.7.0"
-  },
-  "rome": {
-    "root": true,
-    "bundler": {
-      "mode": "modern"
-    },
-    "tests": {
-      "enabled": true
-    },
-    "format": {
-      "enabled": true
-    },
-    "lint": {
-      "enabled": true
-    }
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "rome-root",
   "license": "MIT",
-  "version": "0.0.2-git2baf939c2c54157b4c8da209108f4b3a9d63d794",
+  "version": "0.0.2",
   "engines": {
     "node": ">=12.0.0"
   },
@@ -27,14 +27,7 @@
     "bundler": {
       "mode": "modern"
     },
-    "tests": {
-      "enabled": true
-    },
-    "format": {
-      "enabled": true
-    },
     "lint": {
-      "enabled": true,
       "ignore": [
         "build",
         "coverage",

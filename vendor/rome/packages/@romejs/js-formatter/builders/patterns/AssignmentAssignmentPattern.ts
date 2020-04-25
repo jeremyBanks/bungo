@@ -8,16 +8,16 @@
 import Builder from '../../Builder';
 import {Tokens} from '../../tokens';
 import {
+  AnyNode,
   AssignmentAssignmentPattern,
   assignmentAssignmentPattern,
-  AnyNode,
 } from '@romejs/js-ast';
+import BindingAssignmentPattern from './BindingAssignmentPattern';
 
 export default function AssignmentAssignmentPattern(
   builder: Builder,
   node: AnyNode,
 ): Tokens {
   node = assignmentAssignmentPattern.assert(node);
-
-  throw new Error('unimplemented');
+  return BindingAssignmentPattern(builder, node);
 }

@@ -6,32 +6,33 @@
  */
 
 import {
+  Client,
   ClientFlags,
   ClientRequestFlags,
-  DEFAULT_CLIENT_REQUEST_FLAGS,
-  Client,
-  PLATFORMS,
   DEFAULT_CLIENT_FLAGS,
-  masterCommands,
+  DEFAULT_CLIENT_REQUEST_FLAGS,
+  PLATFORMS,
+  VERSION,
   localCommands,
+  masterCommands,
 } from '@romejs/core';
 import setProcessTitle from './utils/setProcessTitle';
 import {parseCLIFlagsFromProcess} from '@romejs/cli-flags';
 import {
-  createAbsoluteFilePath,
   UnknownFilePath,
+  createAbsoluteFilePath,
   maybeCreateAbsoluteFilePath,
 } from '@romejs/path';
 import {Consumer} from '@romejs/consume';
 import {
-  getFilenameTimestamp,
   ClientProfileOptions,
+  getFilenameTimestamp,
 } from '@romejs/core/client/Client';
 import {commandCategories} from '@romejs/core/common/commands';
 import {writeFile} from '@romejs/fs';
 import fs = require('fs');
 
-import {stripAnsi, markup} from '@romejs/string-markup';
+import {markup, stripAnsi} from '@romejs/string-markup';
 import {Dict} from '@romejs/typescript-helpers';
 
 type CLIFlags = {
@@ -51,10 +52,10 @@ type CLIFlags = {
 
 export default async function cli() {
   setProcessTitle('cli');
-
   const p = parseCLIFlagsFromProcess({
     programName: 'rome',
     usage: '[command] [flags]',
+    version: VERSION,
     defineFlags(c: Consumer): {
       cliFlags: CLIFlags;
       clientFlags: ClientFlags;
@@ -161,6 +162,7 @@ export default async function cli() {
         category: local.category,
         description: local.description,
         defineFlags: local.defineFlags,
+        ignoreFlags: local.ignoreFlags,
         examples: local.examples,
         usage: local.usage,
         callback(_commandFlags) {
@@ -179,6 +181,7 @@ export default async function cli() {
         category: master.category,
         description: master.description,
         defineFlags: master.defineFlags,
+        ignoreFlags: master.ignoreFlags,
         usage: master.usage,
         examples: master.examples,
 
@@ -324,7 +327,6 @@ export default async function cli() {
     // We don't use the data result, so no point transporting it over the bridge
     noData: true,
   });
-
   await client.end();
 
   if (res.type === 'SUCCESS') {

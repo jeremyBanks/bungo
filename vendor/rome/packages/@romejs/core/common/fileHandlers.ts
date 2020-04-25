@@ -8,19 +8,19 @@
 import {ProjectConfig} from '@romejs/project';
 import {FileReference} from '@romejs/core';
 import {
-  WorkerParseOptions,
   WorkerLintOptions,
+  WorkerParseOptions,
 } from '../common/bridges/WorkerBridge';
 import Worker, {ParseResult} from '../worker/Worker';
-import {Diagnostics, DiagnosticSuppressions} from '@romejs/diagnostics';
+import {DiagnosticSuppressions, Diagnostics} from '@romejs/diagnostics';
 import * as compiler from '@romejs/js-compiler';
 import {check as typeCheck} from '@romejs/js-analysis';
-import {parseJSON, stringifyJSON, consumeJSONExtra} from '@romejs/codec-json';
-import {ConstSourceType, ConstProgramSyntax} from '@romejs/js-ast';
+import {consumeJSONExtra, parseJSON, stringifyJSON} from '@romejs/codec-json';
+import {ConstProgramSyntax, ConstSourceType} from '@romejs/js-ast';
 import {
-  createUnknownFilePath,
-  createAbsoluteFilePath,
   UnknownFilePath,
+  createAbsoluteFilePath,
+  createUnknownFilePath,
 } from '@romejs/path';
 import {
   AnalyzeDependencyResult,
@@ -78,7 +78,6 @@ export function getFileHandlerAssert(
 
 export type ExtensionLintInfo = ExtensionHandlerMethodInfo & {
   options: WorkerLintOptions;
-  format: boolean;
 };
 
 export type ExtensionLintResult = {
@@ -174,7 +173,7 @@ const jsonHandler: ExtensionHandler = {
   hasteMode: 'noext',
 
   async format(info: ExtensionHandlerMethodInfo): Promise<ExtensionLintResult> {
-    const {file, project, worker} = info;
+    const {file, worker} = info;
     const {uid} = file;
 
     const real = createAbsoluteFilePath(file.real);
@@ -183,28 +182,23 @@ const jsonHandler: ExtensionHandler = {
 
     let formatted: string = sourceText;
 
-    if (project.config.format.enabled) {
-      if (sourceText.length > 50_000) {
-        // Fast path for big JSON files
-        parseJSON({
-          path,
-          input: sourceText,
-        });
-      } else {
-        const {consumer, comments, hasExtensions} = consumeJSONExtra({
-          input: sourceText,
-          path,
-        });
+    if (sourceText.length > 50_000) {
+      // Fast path for big JSON files
+      parseJSON({
+        path,
+        input: sourceText,
+      });
+    } else {
+      const {consumer, comments, hasExtensions} = consumeJSONExtra({
+        input: sourceText,
+        path,
+      });
 
-        if (hasExtensions) {
-          formatted = stringifyJSON({consumer, comments});
-        } else {
-          formatted = String(JSON.stringify(
-            consumer.asUnknown(),
-            undefined,
-            '  ',
-          ));
-        }
+      if (hasExtensions) {
+        formatted = stringifyJSON({consumer, comments});
+      } else {
+          formatted =
+          String(JSON.stringify(consumer.asUnknown(), undefined, '  '));
       }
     }
 
@@ -326,7 +320,7 @@ function buildJSHandler(
       },
 
       async lint(info: ExtensionLintInfo): Promise<ExtensionLintResult> {
-        const {file: ref, project, format, parseOptions, options, worker} = info;
+        const {file: ref, project, parseOptions, options, worker} = info;
 
         const {ast, sourceText, generated}: ParseResult = await worker.parseJS(
           ref,
@@ -343,7 +337,6 @@ function buildJSHandler(
           ast,
           project,
           sourceText,
-          format,
         });
 
         // Extract lint diagnostics

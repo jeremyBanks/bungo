@@ -9,7 +9,7 @@ import {commandCategories} from '../../common/commands';
 import {createLocalCommand} from '../commands';
 import ClientRequest from '../ClientRequest';
 import {Dict} from '@romejs/typescript-helpers';
-import {writeFile, exists} from '@romejs/fs';
+import {exists, writeFile} from '@romejs/fs';
 import {VERSION} from '../../common/constants';
 import {Consumer} from '@romejs/consume';
 
@@ -63,31 +63,6 @@ export default createLocalCommand(
       }
 
       config.version = `^${VERSION}`;
-
-      const enabledComponents = await reporter.select('Features enabled', {
-        yes: flags.defaults,
-        options: {
-          lint: {
-            label: 'Lint',
-          },
-          format: {
-            label: 'Format',
-          },
-          tests: {
-            label: 'Testing',
-          },
-        },
-        defaults: ['lint'],
-      });
-      if (enabledComponents.has('lint')) {
-        config.lint = {enabled: true};
-      }
-      if (enabledComponents.has('format')) {
-        config.format = {enabled: true};
-      }
-      if (enabledComponents.has('tests')) {
-        config.tests = {enabled: true};
-      }
 
       await writeFile(configPath, `${JSON.stringify(config, null, '  ')}\n`);
 

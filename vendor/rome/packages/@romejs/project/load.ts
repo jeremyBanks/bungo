@@ -11,26 +11,26 @@
 
 import {Consumer} from '@romejs/consume';
 import {
-  ProjectConfig,
-  PartialProjectConfig,
-  ProjectConfigObjects,
-  ProjectConfigMeta,
-  ProjectConfigTarget,
-  ProjectConfigMetaHard,
   DEFAULT_PROJECT_CONFIG,
+  PartialProjectConfig,
+  ProjectConfig,
+  ProjectConfigMeta,
+  ProjectConfigMetaHard,
+  ProjectConfigObjects,
+  ProjectConfigTarget,
 } from './types';
 import {parsePathPattern} from '@romejs/path-match';
 import {
-  arrayOfStrings,
   arrayOfPatterns,
-  mergeArrays,
-  mergeAbsoluteFilePathSets,
+  arrayOfStrings,
   getParentConfigDependencies,
+  mergeAbsoluteFilePathSets,
+  mergeArrays,
 } from './utils';
-import {consumeJSONExtra, ConsumeJSONResult} from '@romejs/codec-json';
+import {ConsumeJSONResult, consumeJSONExtra} from '@romejs/codec-json';
 import {AbsoluteFilePath, AbsoluteFilePathSet} from '@romejs/path';
-import {ob1Coerce1, ob1Number0, ob1Add, ob1Inc} from '@romejs/ob1';
-import {existsSync, readFileTextSync, readdirSync, lstatSync} from '@romejs/fs';
+import {ob1Add, ob1Coerce1, ob1Inc, ob1Number0} from '@romejs/ob1';
+import {existsSync, lstatSync, readFileTextSync, readdirSync} from '@romejs/fs';
 import crypto = require('crypto');
 
 import {ROME_CONFIG_PACKAGE_JSON_FIELD} from './constants';
@@ -193,7 +193,6 @@ export function normalizeProjectConfig(
     resolver: {},
     develop: {},
     typeCheck: {},
-    format: {},
     tests: {},
     files: {},
     vcs: {},
@@ -293,10 +292,6 @@ export function normalizeProjectConfig(
 
   const lint = consumer.get('lint');
   if (categoryExists(lint)) {
-    if (lint.has('enabled')) {
-      config.lint.enabled = lint.get('enabled').asBoolean();
-    }
-
     if (lint.has('ignore')) {
       config.lint.ignore = arrayOfPatterns(lint.get('ignore'));
     }
@@ -306,23 +301,8 @@ export function normalizeProjectConfig(
     }
   }
 
-  const format = consumer.get('format');
-  if (categoryExists(format)) {
-    if (format.has('enabled')) {
-      config.format.enabled = format.get('enabled').asBoolean();
-    }
-
-    if (format.has('ignore')) {
-      config.format.ignore = arrayOfPatterns(format.get('ignore'));
-    }
-  }
-
   const tests = consumer.get('tests');
   if (categoryExists(tests)) {
-    if (tests.has('enabled')) {
-      config.tests.enabled = tests.get('enabled').asBoolean();
-    }
-
     if (tests.has('ignore')) {
       config.tests.ignore = arrayOfPatterns(tests.get('ignore'));
     }
@@ -555,10 +535,6 @@ function mergePartialConfig<
     tests: {
       ...a.tests,
       ...b.tests,
-    },
-    format: {
-      ...a.format,
-      ...b.format,
     },
     files: {
       ...a.files,

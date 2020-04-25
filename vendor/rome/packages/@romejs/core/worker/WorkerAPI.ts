@@ -5,33 +5,32 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {Worker, FileReference} from '@romejs/core';
+import {FileReference, Worker} from '@romejs/core';
 import {Program} from '@romejs/js-ast';
-import {Diagnostics, descriptions, catchDiagnostics} from '@romejs/diagnostics';
+import {Diagnostics, catchDiagnostics, descriptions} from '@romejs/diagnostics';
 import {
-  TransformStageName,
   CompileResult,
   CompilerOptions,
+  TransformStageName,
   compile,
 } from '@romejs/js-compiler';
 import {
-  WorkerParseOptions,
   WorkerCompilerOptions,
   WorkerFormatResult,
-  WorkerLintResult,
   WorkerLintOptions,
+  WorkerLintResult,
+  WorkerParseOptions,
 } from '../common/bridges/WorkerBridge';
 import Logger from '../common/utils/Logger';
 import * as jsAnalysis from '@romejs/js-analysis';
 import {
-  getFileHandlerAssert,
   ExtensionLintResult,
+  getFileHandlerAssert,
 } from '../common/fileHandlers';
 import {
   AnalyzeDependencyResult,
   UNKNOWN_ANALYZE_DEPENDENCIES_RESULT,
 } from '../common/types/analyzeDependencies';
-import {matchPathPatterns} from '@romejs/path-match';
 
 // Some Windows git repos will automatically convert Unix line endings to Windows
 // This retains the line endings for the formatted code if they were present in the source
@@ -197,27 +196,12 @@ export default class WorkerAPI {
     }
   }
 
-  shouldFormat(ref: FileReference): boolean {
-    const project = this.worker.getProject(ref.project);
-
-    return project.config.format.enabled && matchPathPatterns(
-        ref.real,
-        project.config.lint.ignore,
-      ) === 'NO_MATCH' &&
-        matchPathPatterns(ref.real, project.config.format.ignore) ===
-        'NO_MATCH';
-  }
-
   async _format(
     ref: FileReference,
     parseOptions: WorkerParseOptions,
   ): Promise<undefined | ExtensionLintResult> {
     const project = this.worker.getProject(ref.project);
     this.logger.info(`Formatting:`, ref.real);
-
-    if (!this.shouldFormat(ref)) {
-      return;
-    }
 
     const {handler} = getFileHandlerAssert(ref.real, project.config);
     const {format} = handler;
@@ -261,7 +245,6 @@ export default class WorkerAPI {
         return this._format(ref, parseOptions);
       } else {
         return lint({
-          format: this.shouldFormat(ref),
           file: ref,
           project,
           worker: this.worker,

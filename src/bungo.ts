@@ -1,39 +1,34 @@
 import { parseJS } from "@romejs/js-parser/index";
 import { ImportDeclaration } from "@romejs/js-ast/index";
 import {
-  RelativeFilePath,
   AbsoluteFilePath,
-  URLFilePath,
-  UnknownFilePath,
-  maybeCreateAbsoluteFilePath,
   createUnknownFilePath,
   CWD_PATH
 } from "@romejs/path/index";
-import { parseCLIFlagsFromProcess } from '@romejs/cli-flags';
 
 export const main = async (): Promise<undefined | number | void> => {
   const rootPath = CWD_PATH.resolve("src");
   console.log(`if we were using real data it would come from ${rootPath}`);
 
   const input = {
-    root: "/home/user/src/",
+    root: "/home/jeremy/src/",
     files: {
-      "/home/user/src/index.ts": `
+      "/home/jeremy/src/index.ts": `
         import x from "./child.ts"
         export default {};
       `,
-      "/home/user/src/child.ts": `
+      "/home/jeremy/src/child.ts": `
         import {x} from "./hack.ts"
         export default {};
       `,
-      "/home/user/src/hack.ts": `
+      "/home/jeremy/src/hack.ts": `
         export const x = 2;
       `
     },
     expectedMoves: {
-      "/home/user/src/index.ts": "/home/user/src/index.ts",
-      "/home/user/src/child.ts": "/home/user/src/index/child.ts",
-      "/home/user/src/hack.ts": "/home/user/src/index/child/hack.ts"
+      "/home/jeremy/src/index.ts": "/home/jeremy/src/index.ts",
+      "/home/jeremy/src/child.ts": "/home/jeremy/src/index/child.ts",
+      "/home/jeremy/src/hack.ts": "/home/jeremy/src/index/child/hack.ts"
     }
   };
 
@@ -48,9 +43,10 @@ export const main = async (): Promise<undefined | number | void> => {
   // adds all of the imported paths as they are listed in the file
   const withImportedPaths = inputFiles.map(file => {
     const program = parseModule(file.body, file.path.toString());
-    const imports = program.body.filter(x => x.type === "ImportDeclaration") as Array<ImportDeclaration>;
+    const imports = program.body.filter(
+      x => x.type === "ImportDeclaration"
+    ) as Array<ImportDeclaration>;
     const importedPaths = new Set(imports.map(x => x.source.value));
-    console.log(importedPaths);
     return {
       ...file,
       importedPaths
@@ -60,7 +56,11 @@ export const main = async (): Promise<undefined | number | void> => {
   // adds all of the dependency paths from absolute paths resolved from relative imports (and package imports ignored)
   const withDependencyPaths = withImportedPaths.map(file => ({
     ...file,
-    dependencyPaths: new Set()
+    dependencyPaths: new Set(
+      [...file.importedPaths]
+        .filter(x => x.startsWith("./") || x.startsWith("../"))
+        .map(x => file.path.resolve(x))
+    )
   }));
 
   // TODO
@@ -82,11 +82,18 @@ export const main = async (): Promise<undefined | number | void> => {
         body: string;
         newPath: AbsoluteFilePath;
         newBody: string;
-        importedPaths: Set<UnknownFilePath>;
+        importedPaths: Set<string>;
         dependencyPaths: Set<AbsoluteFilePath>;
       }>
     >
   >;
+
+  console.log(
+    files.map(file => ({
+      path: file.path.toString(),
+      dependencyPaths: [...file.dependencyPaths].map(x => x.toString())
+    }))
+  );
 };
 
 const parseModule = (input: string, path: string = "module.ts") =>
@@ -133,4 +140,3 @@ const parseModule = (input: string, path: string = "module.ts") =>
 // const testCases: Array<[ProjectInput, Record<string, string>]> = [
 
 main().then(() => process.exit());
-

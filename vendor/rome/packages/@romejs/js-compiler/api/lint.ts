@@ -6,17 +6,17 @@
  */
 
 import {
-  Diagnostics,
-  DiagnosticSuppressions,
   DiagnosticAdvice,
+  DiagnosticSuppressions,
+  Diagnostics,
 } from '@romejs/diagnostics';
-import {TransformRequest, LintCompilerOptionsDecision} from '../types';
+import {LintCompilerOptionsDecision, TransformRequest} from '../types';
 import {lintTransforms} from '../transforms/lint/index';
-import {Program, AnyComment, AnyNode} from '@romejs/js-ast';
+import {AnyComment, AnyNode, Program} from '@romejs/js-ast';
 import {Cache, CompilerContext} from '@romejs/js-compiler';
 import {formatJS} from '@romejs/js-formatter';
-import {Mappings, Mapping} from '@romejs/codec-source-map';
-import {ob1Get0, Number0, Number1, ob1Get1} from '@romejs/ob1';
+import {Mapping, Mappings} from '@romejs/codec-source-map';
+import {Number0, Number1, ob1Get0, ob1Get1} from '@romejs/ob1';
 import stringDiff from '@romejs/string-diff';
 import Path from '../lib/Path';
 import {SUPPRESSION_NEXT_LINE_START} from '../suppressions';
@@ -44,8 +44,6 @@ export type LintResult = {
 };
 
 const lintCache: Cache<LintResult> = new Cache();
-
-export type FormatRequest = TransformRequest & {format: boolean};
 
 function getStartLine(node: AnyNode): undefined | Number1 {
   const {loc} = node;
@@ -159,8 +157,8 @@ function addSuppressions(context: CompilerContext, ast: Program): Program {
   });
 }
 
-export default async function lint(req: FormatRequest): Promise<LintResult> {
-  const {ast, sourceText, project, options, format} = req;
+export default async function lint(req: TransformRequest): Promise<LintResult> {
+  const {ast, sourceText, project, options} = req;
 
   const query = Cache.buildQuery(req);
   const cached = lintCache.get(query);
@@ -168,34 +166,30 @@ export default async function lint(req: FormatRequest): Promise<LintResult> {
     return cached;
   }
 
-  let formattedMappings: undefined | Mappings;
-  let formattedCode = sourceText;
-  if (format) {
-    // Perform autofixes
-    const context = new CompilerContext({
-      options,
-      ast,
-      project,
-      frozen: false,
-      origin: {
-        category: 'lint',
-      },
-    });
+  // Perform autofixes
+  const formatContext = new CompilerContext({
+    options,
+    ast,
+    project,
+    frozen: false,
+    origin: {
+      category: 'lint',
+    },
+  });
 
-    let newAst = context.reduceRoot(ast, lintTransforms);
-    newAst = addSuppressions(context, newAst);
+  let formattedAst = formatContext.reduceRoot(ast, lintTransforms);
+  formattedAst = addSuppressions(formatContext, formattedAst);
 
-    const generator = formatJS(newAst, {
-      typeAnnotations: true,
-      sourceMaps: true,
-      format: 'pretty',
-      sourceText,
-    });
-    formattedCode = generator.getCode();
-    formattedMappings = generator.getMappings();
-  }
+  const generator = formatJS(formattedAst, {
+    typeAnnotations: true,
+    sourceMaps: true,
+    format: 'pretty',
+    sourceText,
+  });
+  const formattedCode = generator.getCode();
+  const formattedMappings = generator.getMappings();
 
-  // Run lints (could be with the autofixed AST)
+  // Run lints
   const context = new CompilerContext({
     ast,
     project,

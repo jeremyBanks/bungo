@@ -10,9 +10,9 @@ import {PathPatterns} from '@romejs/path-match';
 import {BundlerMode} from '@romejs/core';
 import {
   AbsoluteFilePath,
+  AbsoluteFilePathSet,
   TEMP_PATH,
   createAbsoluteFilePath,
-  AbsoluteFilePathSet,
 } from '@romejs/path';
 import {Consumer} from '@romejs/consume';
 import {Dict, RequiredProps} from '@romejs/typescript-helpers';
@@ -42,7 +42,6 @@ export type ProjectConfigObjects = {
     ignore: PathPatterns;
   };
   lint: {
-    enabled: boolean;
     globals: Array<string>;
     ignore: PathPatterns;
   };
@@ -50,12 +49,7 @@ export type ProjectConfigObjects = {
     enabled: boolean;
     libs: AbsoluteFilePathSet;
   };
-  format: {
-    enabled: boolean;
-    ignore: PathPatterns;
-  };
   tests: {
-    enabled: boolean;
     ignore: PathPatterns;
   };
   develop: {serveStatic: boolean};
@@ -70,10 +64,7 @@ export type ProjectConfigObjects = {
   targets: Map<string, ProjectConfigTarget>;
 };
 
-export type ProjectConfigCategoriesWithIgnoreAndEnabled =
-  | 'tests'
-  | 'format'
-  | 'lint';
+export type ProjectConfigCategoriesWithIgnore = 'tests' | 'lint';
 
 export type ProjectConfigTarget = {constraints: Array<string>};
 
@@ -183,24 +174,17 @@ export const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
     enabled: false,
   },
 
-  format: {
-    enabled: false,
-    ignore: [],
-  },
-
   haste: {
     enabled: false,
     ignore: [],
   },
 
   lint: {
-    enabled: false,
     ignore: [],
     globals: [],
   },
 
   tests: {
-    enabled: false,
     ignore: [],
   },
 

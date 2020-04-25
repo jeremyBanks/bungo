@@ -8,18 +8,17 @@
 // TODO: Shift file into packages/@romejs/js-compiler/transforms/lint/__rtests__
 // after all open linting PRs have been merged.
 
-import {test, TestHelper} from 'rome';
+import {TestHelper, test} from 'rome';
 import lint from './lint';
 import {parseJS} from '@romejs/js-parser';
 import {createUnknownFilePath} from '@romejs/path';
 import {DEFAULT_PROJECT_CONFIG} from '@romejs/project';
-import {ConstSourceType, ConstProgramSyntax} from '@romejs/js-ast';
+import {ConstProgramSyntax, ConstSourceType} from '@romejs/js-ast';
 import {DiagnosticCategory} from '@romejs/diagnostics';
 import {printDiagnosticsToString} from '@romejs/cli-diagnostics';
 
 type TestLintOptions = {
   category: undefined | DiagnosticCategory;
-  format?: boolean;
   sourceType?: ConstSourceType;
   syntax?: Array<ConstProgramSyntax>;
 };
@@ -34,12 +33,11 @@ export async function testLintMultiple(
   }
 }
 
-export async function testLint(t: TestHelper, input: string, {
-  syntax = [],
-  category,
-  format = false,
-  sourceType = 'module',
-}: TestLintOptions) {
+export async function testLint(
+  t: TestHelper,
+  input: string,
+  {syntax = [], category, sourceType = 'module'}: TestLintOptions,
+) {
   t.addToAdvice({
     type: 'log',
     category: 'info',
@@ -51,7 +49,6 @@ export async function testLint(t: TestHelper, input: string, {
     data: {
       category,
       syntax,
-      format,
       sourceType,
     },
   });
@@ -76,7 +73,6 @@ export async function testLint(t: TestHelper, input: string, {
 
   const res = await lint({
     options: {},
-    format,
     ast,
     sourceText: input,
     project: {
@@ -102,9 +98,7 @@ export async function testLint(t: TestHelper, input: string, {
     suppressions: res.suppressions,
   }));
 
-  if (format) {
-    await t.snapshotNamed(`${snapshotName}: formatted`, res.src);
-  }
+  await t.snapshotNamed(`${snapshotName}: formatted`, res.src);
 
   t.clearAdvice();
 }
@@ -113,7 +107,7 @@ test('format disabled in project config should not regenerate the file', async (
   t,
 ) => {
   // Intentionally weird formatting
-  await testLint(t, 'foobar ( "yes" );', {category: undefined, format: false});
+  await testLint(t, 'foobar ( "yes" );', {category: undefined});
 });
 
 test(
@@ -121,7 +115,6 @@ test(
   async (t) => {
     await testLint(t, 'foobar ( "yes" );', {
       category: undefined,
-      format: true,
     });
   },
 );

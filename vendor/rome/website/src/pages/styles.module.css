@@ -1,0 +1,142 @@
+/**
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ * @format
+ */
+
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBannerBackground {
+  background-blend-mode: color;
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image: url('/img/rome-logo.png');
+  background-size: 45%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+:global(html[data-theme='dark']) .heroBannerBackground {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.heroBannerTitle {
+  font-size: 3.5rem;
+}
+
+.heroBannerSubtitle {
+  font-size: 1.5rem;
+  font-weight: var(--ifm-font-weight-semibold);
+  margin-bottom: var(--ifm-paragraph-margin-bottom);
+  line-height: var(--ifm-line-height-base);
+}
+
+.getStarted:focus {
+  box-shadow: 0 0 0 2px var(--ifm-color-content);
+}
+
+@media screen and (max-width: 966px) {
+  .heroBannerTitle {
+    font-size: 2rem;
+  }
+
+  .heroBannerSubtitle {
+    font-size: 1rem;
+  }
+
+  .heroBanner {
+    padding: 2rem;
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Callout */
+
+.calloutPrimary {
+  background-color: #c12127;
+}
+
+.calloutTagline {
+  color: var(--ifm-color-white);
+  font-size: 1.5rem;
+  font-weight: var(--ifm-font-weight-semibold);
+  margin-bottom: 0;
+}
+
+@media screen and (max-width: 966px) {
+  .calloutTagline {
+    font-size: 1.2rem;
+  }
+}
+
+/* Features */
+
+.featureRow {
+  margin-bottom: 6rem;
+  margin-top: 6rem;
+}
+
+.featureTextCol {
+  display: flex !important;
+}
+
+.featureReverse {
+  flex-direction: row-reverse;
+}
+
+.featureTextContainer {
+  align-self: center;
+}
+
+.featureTitle {
+  font-size: 2.5rem;
+}
+
+.featureDescription {
+  font-size: 1.15rem;
+}
+
+@media screen and (max-width: 966px) {
+  .featureRow {
+    margin-bottom: 3rem;
+    margin-top: 3rem;
+  }
+
+  .featureTextContainer {
+    margin: 0 auto;
+    max-width: 30rem;
+    width: 100%;
+  }
+
+  .featureTitle {
+    font-size: 1.5rem;
+  }
+
+  .featureDescription {
+    font-size: 1rem;
+  }
+
+  .featureImage {
+    display: block;
+    margin: 0 auto;
+    max-width: 24rem;
+    width: 100%;
+  }
+}
