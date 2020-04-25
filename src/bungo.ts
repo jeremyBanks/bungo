@@ -5,28 +5,38 @@ import {
   createUnknownFilePath,
   CWD_PATH
 } from "@romejs/path/index";
-import { parseCLIFlagsFromProcess } from '@romejs/cli-flags';
+import { parseCLIFlagsFromProcess } from "@romejs/cli-flags";
+
+import packageJson from "../package.json";
+
+// see https://github.com/Shopify/quilt/blob/master/packages/useful-types/src/types.ts
+export type ArrayElement<T> = T extends Array<infer U> ? U : never;
 
 export const main = async (): Promise<undefined | number | void> => {
   const parser = parseCLIFlagsFromProcess({
-    programName: 'bungo',
-    usage: '[flags] [args]',
-    defineFlags(c): {
-      rootPath: AbsoluteFilePath,
-    } {
-      return {
-        rootPath: CWD_PATH.resolve(c.get('root').asString("."))
-      };
-    }
+    programName: packageJson.name,
+    version: packageJson.version,
+    defineFlags: flagConsumer => ({
+      rootPath: CWD_PATH.resolve(
+        flagConsumer
+          .get("root", {
+            description: "root path to modify, defaulting to working directory."
+          })
+          .asString(".")
+      )
+    })
   });
   const flags = await parser.init();
   const args = parser.getArgs();
+
   if (args.length > 0) {
-    console.error(`I don't want your arguments (${args})`);
+    console.error(`no arguments expected, got (${JSON.stringify(args)})`);
     return 1;
   }
 
-  console.log(`if we were using real data it would come from ${flags.rootPath}`);
+  console.log(
+    `if we were using real data it would come from ${flags.rootPath}`
+  );
 
   const input = {
     root: "/home/jeremy/src/",
@@ -81,6 +91,17 @@ export const main = async (): Promise<undefined | number | void> => {
     )
   }));
 
+  const byDependencies: Map<Readonly<typeof withDependencyPaths[0]>, Set<Readonly<typeof withDependencyPaths[0]>>> = new Map();
+
+  // Is there a stable configuration? how many times do we need to iterate this?
+  // I guess we start with the abstract graph and work from there
+  // don't index on the original names at all, just keep them for reference.
+
+  const withDependentPaths = withDependencyPaths.map(file => ({
+    ...file,
+
+  }));
+
   // TODO
   const withNewPath = withDependencyPaths.map(file => ({
     ...file,
@@ -120,41 +141,5 @@ const parseModule = (input: string, path: string = "module.ts") =>
     input,
     path
   });
-
-// // Should this be package-aware? Modify behaviour when it sees a directory with a package.json?
-
-// export class ProjectInput {
-//   public readonly rootPath: string;
-//   public readonly files: Map<string, File>;
-
-//   constructor(rootPath: string, files: Record<string, string>) {
-//     this.rootPath = rootPath;
-//     const filesByOriginalPath = new Map();
-//     for (const [path, contents] of Object.entries(files)) {
-//   }
-// }
-
-// export class File {
-//   private readonly originalPath: string;
-//   private readonly originalBody: string;
-//   private finalPath: string = this.originalPath;
-//   private finalBody: string = this.originalBody;
-//   public readonly dependents: Set<Ref<File>> = new Set();
-//   public readonly dependencies: Set<Ref<File>> = new Set();
-
-//   constructor(originalPath: string, originalBody: string) {
-//     this.originalPath = originalPath;
-//     this.originalBody = originalBody;
-//   }
-// }
-
-/**
- * What is our logic?
- *
- * Do we want to trace re-exports?
- * Maybe yes if it's simple even if we don't want to use that yet.
- *
- */
-// const testCases: Array<[ProjectInput, Record<string, string>]> = [
 
 main().then(() => process.exit());
