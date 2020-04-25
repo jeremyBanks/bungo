@@ -27,10 +27,6 @@ export const main = async (): Promise<undefined | number | void> => {
     return 1;
   }
 
-  console.log(
-    `if we were using real data it would come from ${flags.rootPath}`
-  );
-
   await bungo();
 };
 

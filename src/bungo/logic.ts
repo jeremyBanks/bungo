@@ -9,19 +9,33 @@ import { ArrayElement } from "./useful-types";
 
 export const bungo = () => {
   const project = ProjectGraph.fromData({
-    rootPath: createPath("/home/jeremy/src/").assertAbsolute(),
+    rootPath: createPath("/src/").assertAbsolute(),
     files: Object.entries({
-      "/home/jeremy/src/index.ts": `
-      import x from "./child.ts"
-      export default {};
-    `,
-      "/home/jeremy/src/child.ts": `
-      import {x} from "./hack.ts"
-      export default {};
-    `,
-      "/home/jeremy/src/hack.ts": `
-      export const x = 2;
-    `,
+      "/src/main.ts": `
+        import "./cli.ts";
+        import "./business.ts";
+      `,
+      "/src/cli.ts": `
+        import "./string-utils.ts";
+      `,
+      "/src/tool.ts": `
+        import "./math-utils.ts";
+      `,
+      "/src/math-utils.ts": `
+        export sin = Math.sin;
+      `,
+      "/src/string-utils.ts": `
+        export const EMPTY = "";
+      `,
+      "/src/business.ts": `
+        import "./user.ts";
+      `,
+      "/src/user.ts": `
+        import "./string-utils.ts";
+      `,
+      "/src/property.ts": `
+        export const name = "example";
+      `,
     }).map(([path, body]) => ({
       path: createPath(path).assertAbsolute(),
       body,
@@ -29,20 +43,52 @@ export const bungo = () => {
   });
 
   const expectedMoves = {
-    "/home/jeremy/src/index.ts": "/home/jeremy/src/index.ts",
-    "/home/jeremy/src/child.ts": "/home/jeremy/src/index/child.ts",
-    "/home/jeremy/src/hack.ts": "/home/jeremy/src/index/child/hack.ts",
+    "/src/tool.ts": "/src/tool.ts",
+    "/src/math-utils.ts": "/src/math-utils.ts",
+    "/src/main.ts": "/src/main.ts",
+    "/src/string-utils.ts": "/src/main/string-utils.ts",
+    "/src/business.ts": "/src/main/business.ts",
+    "/src/user.ts": "/src/business/user.ts",
+    "/src/property.ts": "/src/business/property.ts",
   };
 
-  console.log(project);
+  for (const file of project.fileNodes.values()) {
+    if (file.dependencies.size === 0 && file.dependents.size === 0) {
+      console.warn(`${file.originalPath} isn't connected to any other files.`);
+    } else {
+      if (file.dependencies.size === 0) {
+        console.info(`${file.originalPath} is a leaf (no dependencies).`);
+      }
+      if (file.dependents.size === 0) {
+        console.info(`${file.originalPath} is a root (no dependents).`);
+      }
+
+      if (file.dependencies.size > 0) {
+        console.debug(`${file.originalPath} depends on:`);
+        for (const dependency of file.dependencies.values()) {
+          console.debug(`  ${dependency.originalPath}`);
+        }
+      }
+      if (file.dependents.size > 0) {
+        console.debug(`${file.originalPath} is depended-on by:`);
+        for (const dependent of file.dependents.values()) {
+          console.debug(`  ${dependent.originalPath}`);
+        }
+      }
+    }
+    console.debug();
+  }
+
+  console.debug();
+
   return 0;
 };
 
 export class ProjectGraph {
   private constructor(
-    private rootPath: AbsoluteFilePath,
-    private fileNodes: Set<FileNode>,
-    private dependencyEdges: Set<DependencyEdge>
+    readonly rootPath: AbsoluteFilePath,
+    readonly fileNodes: Set<FileNode>,
+    readonly dependencyEdges: Set<DependencyEdge>
   ) {
     this.rootPath = rootPath;
     this.fileNodes = fileNodes;
