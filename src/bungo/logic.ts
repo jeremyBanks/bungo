@@ -29,6 +29,7 @@ export const bungo = () => {
       `,
       "/src/business.ts": `
         import "./user.ts";
+        import "./property.ts";
       `,
       "/src/user.ts": `
         import "./string-utils.ts";
@@ -57,29 +58,36 @@ export const bungo = () => {
       console.warn(`${file.originalPath} isn't connected to any other files.`);
     } else {
       if (file.dependencies.size === 0) {
-        console.info(`${file.originalPath} is a leaf (no dependencies).`);
-      }
-      if (file.dependents.size === 0) {
-        console.info(`${file.originalPath} is a root (no dependents).`);
+        console.info(`${file.originalPath} is a leaf, with dependents:`);
+      } else if (file.dependents.size === 0) {
+        console.info(`${file.originalPath} is a root, with dependencies:`);
+      } else {
+        console.info(
+          `${file.originalPath} has both dependents and dependencies:`
+        );
       }
 
       if (file.dependencies.size > 0) {
-        console.debug(`${file.originalPath} depends on:`);
         for (const dependency of file.dependencies.values()) {
-          console.debug(`  ${dependency.originalPath}`);
+          console.debug(
+            `  ${file.originalPath.getBasename()} ==> ${
+              dependency.originalPath
+            }`
+          );
         }
       }
+
       if (file.dependents.size > 0) {
-        console.debug(`${file.originalPath} is depended-on by:`);
         for (const dependent of file.dependents.values()) {
-          console.debug(`  ${dependent.originalPath}`);
+          console.debug(
+            `  ${dependent.originalPath} ==> ${file.originalPath.getBasename()}`
+          );
         }
       }
     }
+
     console.debug();
   }
-
-  console.debug();
 
   return 0;
 };
@@ -95,7 +103,7 @@ export class ProjectGraph {
     this.dependencyEdges = dependencyEdges;
   }
 
-  static fromData({
+  public static fromData({
     rootPath,
     files,
   }: {
@@ -110,7 +118,12 @@ export class ProjectGraph {
 
     const dependencyEdges: Set<DependencyEdge> = new Set();
     for (const [path, file] of fileNodesByOriginalPath.entries()) {
-      const program = parseModule(file.originalBody, path);
+      const program = parseJS({
+        sourceType: "module",
+        input: file.originalBody,
+        path,
+      });
+
       const imports = program.body.filter(
         (x) => x.type === "ImportDeclaration"
       ) as Array<ImportDeclaration>;
@@ -145,6 +158,10 @@ export class ProjectGraph {
     const fileNodes = new Set(fileNodesByOriginalPath.values());
     return new ProjectGraph(rootPath, fileNodes, dependencyEdges);
   }
+
+  public updatedPaths(): Record<string, string> {
+    return {};
+  }
 }
 
 class FileNode {
@@ -170,10 +187,3 @@ class DependencyEdge {
     this.dependentTail = dependentTail;
   }
 }
-
-const parseModule = (input: string, path: string = "module.ts") =>
-  parseJS({
-    sourceType: "module",
-    input,
-    path,
-  });

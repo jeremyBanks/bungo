@@ -11,6 +11,7 @@
   "private": true,
   "scripts": {
     "bungo": "yarn build; node ./.dist/index.js \"$@\"",
+    "test": "rome test src",
     "bungobungo": "yarn bungo --root src",
     "bb": "yarn prettier --write src/* src/**/*; yarn bungobungo",
     "sunrise": "git stash || true; yarn update-rome; yarn build-rome; git add --force ./node_modules/rome; git commit ./node_modules/rome -m '🌅 update Rome'; yarn build; yarn bungo",
