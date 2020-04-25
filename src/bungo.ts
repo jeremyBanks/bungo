@@ -1,4 +1,5 @@
 import { parseJS } from "@romejs/js-parser/index";
+import { ImportDeclaration } from "@romejs/js-ast/index";
 import {
   RelativeFilePath,
   AbsoluteFilePath,
@@ -45,10 +46,16 @@ export const main = async (): Promise<undefined | number | void> => {
   }));
 
   // adds all of the imported paths as they are listed in the file
-  const withImportedPaths = inputFiles.map(file => ({
-    ...file,
-    importedPaths: new Set()
-  }));
+  const withImportedPaths = inputFiles.map(file => {
+    const program = parseModule(file.body, file.path.toString());
+    const imports = program.body.filter(x => x.type === "ImportDeclaration") as Array<ImportDeclaration>;
+    const importedPaths = new Set(imports.map(x => x.source.value));
+    console.log(importedPaths);
+    return {
+      ...file,
+      importedPaths
+    };
+  });
 
   // adds all of the dependency paths from absolute paths resolved from relative imports (and package imports ignored)
   const withDependencyPaths = withImportedPaths.map(file => ({
@@ -80,8 +87,6 @@ export const main = async (): Promise<undefined | number | void> => {
       }>
     >
   >;
-
-  console.log(files);
 };
 
 const parseModule = (input: string, path: string = "module.ts") =>
