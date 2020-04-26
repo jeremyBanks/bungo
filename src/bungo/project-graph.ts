@@ -11,11 +11,13 @@ export class ProjectGraph {
     // all files in the project
     readonly fileNodes: Set<FileNode>,
     // all imports in the project
-    readonly dependencyEdges: Set<DependencyEdge>
+    readonly dependencyEdges: Set<DependencyEdge>,
+    readonly updatedPaths: Record<string, string>
   ) {
     this.rootPath = rootPath;
     this.fileNodes = fileNodes;
     this.dependencyEdges = dependencyEdges;
+    this.updatedPaths = updatedPaths;
   }
 
   public static fromData({
@@ -59,7 +61,7 @@ export class ProjectGraph {
         const dependency = fileNodesByOriginalPath.get(path);
 
         if (!dependency) {
-          throw new Error(`could not import ${path}`);
+          throw new Error(`could not find import ${path}`);
         }
 
         file.dependencies.add(dependency);
@@ -69,16 +71,88 @@ export class ProjectGraph {
     }
 
     const fileNodes = new Set(fileNodesByOriginalPath.values());
-    return new ProjectGraph(rootPath, fileNodes, dependencyEdges);
-  }
 
-  public updatedPaths(): Record<string, string> {
-    const moves: Record<string, string> = {};
-    for (const files of this.fileNodes) {
-      const path = files.originalPath.toString();
-      moves[path] = path;
+    const walkNode = (node: FileNode, parent?: FileNode) => {
+      if (!node.parent) {
+        // this node hasn't been visited yet.
+        node.parent = parent;
+        node.depth = parent ? parent.depth + 1 : 0;
+
+        for (const child of node.dependencies) {
+          walkNode(child, node);
+        }
+      } else {
+        // this node has already been visited.
+        if (parent === undefined) {
+          throw new Error("sanity check failed: visiting a root node twice");
+        }
+        // we need to set its parent to the nearest ancestor
+        // of the current parent and the new parent.
+        // we can do that using their depth to walk back to the same level and
+        // then step each back from there.
+        let newParent;
+        let aParent: FileNode | undefined = node.parent;
+        let bParent: FileNode | undefined = parent;
+        while (true) {
+          if (aParent === undefined || bParent === undefined) {
+            // promote to root package if it has dependents in multiple root packages.
+            newParent = undefined;
+            break;
+          } else if (aParent === bParent) {
+            newParent = aParent;
+            break;
+          } else if (aParent.depth > bParent.depth) {
+            aParent = aParent.parent;
+            continue;
+          } else if (bParent.depth < aParent.depth) {
+            bParent = bParent.parent;
+            continue;
+          } else {
+            aParent = aParent.parent;
+            bParent = bParent.parent;
+          }
+        }
+        if (newParent !== this.parent) {
+          this.parent = newParent;
+          this.depth = newParent ? newParent.depth + 1 : 0;
+
+          // We have already walked this, but we need to do it again with the new depth.
+          for (const child of node.dependencies) {
+            walkNode(child, node);
+          }
+        }
+      }
+    };
+
+    for (const root of [...fileNodes].filter(
+      (file) => file.dependents.size === 0
+    )) {
+      walkNode(root);
     }
-    return moves;
+
+    // TODO: add .children ?
+
+    const updatedPaths: Record<string, string> = {};
+
+    const walkUpdatingPaths = (node: FileNode, parentPath: string) => {
+      const path = `${parentPath}/${node.originalPath.getBasename()}`;
+      updatedPaths[node.originalPath.toString()] = path;
+      for (const child of [...fileNodes].filter(
+        (file) => file.parent === node
+      )) {
+        walkUpdatingPaths(child, path.split(/\./)[0]);
+      }
+    };
+
+    for (const root of [...fileNodes].filter(
+      (file) => file.parent === undefined
+    )) {
+      walkUpdatingPaths(root, rootPath.toString().replace(/\/$/, ""));
+    }
+
+    // TODO: support circular imports (treat them like a single node)
+
+    return new ProjectGraph(rootPath, fileNodes, dependencyEdges, updatedPaths);
   }
 }
 

@@ -31,7 +31,7 @@ test("bungo a project", (assert) => {
         import "./string-utils.ts";
       `,
       "/src/property.ts": `
-        export const name = "example";
+        import "./math-utils.ts";
       `,
     }).map(([path, body]) => ({
       path: createPath(path).assertAbsolute(),
@@ -43,14 +43,15 @@ test("bungo a project", (assert) => {
     "/src/tool.ts": "/src/tool.ts",
     "/src/math-utils.ts": "/src/math-utils.ts",
     "/src/main.ts": "/src/main.ts",
+    "/src/cli.ts": "/src/main/cli.ts",
     "/src/string-utils.ts": "/src/main/string-utils.ts",
     "/src/business.ts": "/src/main/business.ts",
-    "/src/user.ts": "/src/business/user.ts",
-    "/src/property.ts": "/src/business/property.ts",
+    "/src/user.ts": "/src/main/business/user.ts",
+    "/src/property.ts": "/src/main/business/property.ts",
   };
 
   assert.is(
-    project.updatedPaths(),
+    project.updatedPaths,
     expectedMoves,
     "project must generate correct updated paths for all files"
   );
@@ -91,3 +92,5 @@ test("bungo a project", (assert) => {
     console.log();
   }
 });
+
+test("circular imports", (assert) => {});
