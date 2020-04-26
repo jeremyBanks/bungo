@@ -30,6 +30,7 @@ import {ConsumePath, consume} from '@romejs/consume';
 import {Event, EventSubscription} from '@romejs/events';
 import MasterRequest, {
   EMPTY_SUCCESS_RESPONSE,
+  MasterRequestCancelled,
   MasterRequestInvalid,
 } from './MasterRequest';
 import ProjectManager from './project/ProjectManager';
@@ -74,6 +75,7 @@ export type MasterClient = {
   bridge: MasterBridge;
   flags: ClientFlags;
   version: string;
+  requestsInFlight: Set<MasterRequest>;
 };
 
 export type MasterOptions = {
@@ -395,8 +397,14 @@ export default class Master {
   }
 
   async end() {
+    // Cancel all queries in flight
+    for (const client of this.connectedClients) {
+      for (const req of client.requestsInFlight) {
+        req.cancel();
+      }
+    }
+
     // We should remove everything that has an external dependency like a socket or process
-    // TODO terminate all queries in flight
     await this.endEvent.callOptional();
     this.workerManager.end();
     this.memoryFs.unwatchAll();
@@ -406,7 +414,6 @@ export default class Master {
     let profiler: undefined | Profiler;
 
     // If we aren't a dedicated process then we should only expect a single connection
-
     // and when that ends. End the Master.
     if (this.options.dedicated === false) {
       bridge.endEvent.subscribe(() => {
@@ -449,6 +456,32 @@ export default class Master {
       return await worker.bridge.profilingStop.call();
     });
 
+    // When enableWorkerLogs is called we setup subscriptions to the worker logs
+    // Logs are never transported from workers to the master unless there is a subscription
+    let subscribedWorkers = false;
+    bridge.enableWorkerLogs.subscribe(() => {
+      // enableWorkerLogs could be called twice in the case of `--logs --rage`. We'll only want to setup the subscriptions once
+      if (subscribedWorkers) {
+        return;
+      } else {
+        subscribedWorkers = true;
+      }
+
+      function onLog(chunk: string) {
+        bridge.log.call({origin: 'worker', chunk});
+      }
+
+      // Add on existing workers if there are any
+      for (const worker of this.workerManager.getWorkers()) {
+        bridge.attachEndSubscriptionRemoval(worker.bridge.log.subscribe(onLog));
+      }
+
+      // Listen for logs for any workers that start later
+      this.workerManager.workerStartEvent.subscribe((worker) => {
+        bridge.attachEndSubscriptionRemoval(worker.log.subscribe(onLog));
+      });
+    });
+
     await bridge.handshake();
 
     const client = await this.createClient(bridge);
@@ -464,6 +497,14 @@ export default class Master {
 
     bridge.query.subscribe(async (request) => {
       return await this.handleRequest(client, request);
+    });
+
+    bridge.cancelQuery.subscribe(async (token) => {
+      for (const req of client.requestsInFlight) {
+        if (req.query.cancelToken === token) {
+          req.cancel();
+        }
+      }
     });
 
     await this.clientStartEvent.callOptional(client);
@@ -554,36 +595,10 @@ export default class Master {
       reporter,
       flags,
       version,
+      requestsInFlight: new Set(),
     };
 
     this.connectedClients.add(client);
-
-    // When enableWorkerLogs is called we setup subscriptions to the worker logs
-
-    // Logs are never transported from workers to the master unless there is a subscription
-    let subscribedWorkers = false;
-    bridge.enableWorkerLogs.subscribe(() => {
-      // enableWorkerLogs could be called twice in the case of `--logs --rage`. We'll only want to setup the subscriptions once
-      if (subscribedWorkers) {
-        return;
-      } else {
-        subscribedWorkers = true;
-      }
-
-      function onLog(chunk: string) {
-        bridge.log.call({origin: 'worker', chunk});
-      }
-
-      // Add on existing workers if there are any
-      for (const worker of this.workerManager.getWorkers()) {
-        bridge.attachEndSubscriptionRemoval(worker.bridge.log.subscribe(onLog));
-      }
-
-      // Listen for logs for any workers that start later
-      this.workerManager.workerStartEvent.subscribe((worker) => {
-        bridge.attachEndSubscriptionRemoval(worker.log.subscribe(onLog));
-      });
-    });
 
     bridge.updatedListenersEvent.subscribe((listeners) => {
       if (listeners.has('log')) {
@@ -594,6 +609,11 @@ export default class Master {
     });
 
     bridge.endEvent.subscribe(() => {
+      // Cancel any requests still in flight
+      for (const req of client.requestsInFlight) {
+        req.cancel();
+      }
+
       this.connectedClients.delete(client);
       this.connectedClientsListeningForLogs.delete(client);
       this.connectedReporters.removeStream(errStream);
@@ -648,7 +668,7 @@ export default class Master {
     };
 
     const query: MasterQueryRequest = {
-      commandName: partialQuery.command,
+      commandName: partialQuery.commandName,
       args: partialQuery.args === undefined ? [] : partialQuery.args,
       noData: partialQuery.noData === true,
       requestFlags,
@@ -657,6 +677,7 @@ export default class Master {
       commandFlags: partialQuery.commandFlags === undefined
         ? {}
         : partialQuery.commandFlags,
+      cancelToken: partialQuery.cancelToken,
     };
 
     const {bridge} = client;
@@ -867,6 +888,10 @@ export default class Master {
           name: err.name,
           message: err.message,
           stack: err.stack,
+        };
+      } else if (err instanceof MasterRequestCancelled) {
+        return {
+          type: 'CANCELLED',
         };
       } else if (err instanceof MasterRequestInvalid) {
         return {
