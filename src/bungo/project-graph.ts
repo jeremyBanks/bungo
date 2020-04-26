@@ -73,6 +73,12 @@ export class ProjectGraph {
     const fileNodes = new Set(fileNodesByOriginalPath.values());
 
     const walkNode = (node: FileNode, parent?: FileNode) => {
+      console.log(
+        `${node.originalPath.toString()} from ${
+          (node.originalPath && node.originalPath.toString()) || "root"
+        }`
+      );
+
       if (!node.parent) {
         // this node hasn't been visited yet.
         node.parent = parent;
@@ -99,22 +105,26 @@ export class ProjectGraph {
             newParent = undefined;
             break;
           } else if (aParent === bParent) {
+            // common ancestor!
             newParent = aParent;
             break;
           } else if (aParent.depth > bParent.depth) {
             aParent = aParent.parent;
             continue;
-          } else if (bParent.depth < aParent.depth) {
+          } else if (bParent.depth > aParent.depth) {
             bParent = bParent.parent;
             continue;
           } else {
             aParent = aParent.parent;
             bParent = bParent.parent;
+            continue;
           }
+          throw new Error("unreachable");
         }
-        if (newParent !== this.parent) {
+        const newDepth = newParent ? newParent.depth + 1 : 0;
+        if (newDepth !== this.depth || newParent !== this.parent) {
           this.parent = newParent;
-          this.depth = newParent ? newParent.depth + 1 : 0;
+          this.depth = newDepth;
 
           // We have already walked this, but we need to do it again with the new depth.
           for (const child of node.dependencies) {
