@@ -73,7 +73,7 @@ export class ProjectGraph {
     const fileNodes = new Set(fileNodesByOriginalPath.values());
 
     const walkNode = (node: FileNode, parent?: FileNode) => {
-      if (!node.parent) {
+      if (node.depth === Infinity) {
         // this node hasn't been visited yet.
         node.parent = parent;
         node.depth = parent ? parent.depth + 1 : 0;
@@ -116,9 +116,9 @@ export class ProjectGraph {
           throw new Error("unreachable");
         }
         const newDepth = newParent ? newParent.depth + 1 : 0;
-        if (newDepth !== this.depth || newParent !== this.parent) {
-          this.parent = newParent;
-          this.depth = newDepth;
+        if (newDepth !== node.depth || newParent !== node.parent) {
+          node.parent = newParent;
+          node.depth = newDepth;
 
           // We have already walked this, but we need to do it again with the new depth.
           for (const child of node.dependencies) {
@@ -180,7 +180,7 @@ class FileNode {
     this.dependencies = dependencies;
     this.dependents = dependents;
     this.parent = parent;
-    this.depth = Infinity;
+    this.depth = depth;
   }
 }
 

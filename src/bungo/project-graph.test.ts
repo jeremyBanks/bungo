@@ -25,7 +25,7 @@ test("bungo a project", (assert) => {
     "/src/property.ts": "/src/main/business/property.ts",
   };
 
-  assert.is(
+  assert.looksLike(
     project.updatedPaths,
     expectedMoves,
     "project must generate correct updated paths for all files"

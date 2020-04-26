@@ -40,15 +40,30 @@ export const main = async (): Promise<undefined | number | void> => {
 
   console.log(`
     digraph {
-      rankdir=TB
-      labelloc=T
-      packMode=node
-      ${[...project.dependencyEdges.values()]
-        .map(
-          (edge) =>
-            `"${edge.dependentTail.originalPath.getBasename()}"->"${edge.dependencyHead.originalPath.getBasename()}"`
-        )
-        .join("\n")}
+      rankdir=BT
+
+      subgraph {
+        ${[...project.dependencyEdges.values()]
+          .map(
+            (edge) =>
+              ` "${edge.dependentTail.originalPath.getBasename()}"->"${edge.dependencyHead.originalPath.getBasename()}"`
+          )
+          .join("\n")}
+      }
+
+      subgraph {
+        node [shape=box]
+        edge [arrowhead=none]
+        ${[...project.fileNodes.values()]
+          .map((file) =>
+            file.parent
+              ? `"${
+                  file.parent.originalPath.getBasename().split(".")[0]
+                }" -> "${file.originalPath.getBasename().split(".")[0]}"`
+              : `"~/src" -> "${file.originalPath.getBasename().split(".")[0]}"`
+          )
+          .join("\n")}
+      }
     }
 `);
 
