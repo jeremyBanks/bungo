@@ -8,6 +8,7 @@
 import {
   Diagnostic,
   DiagnosticAdvice,
+  DiagnosticLocation,
   DiagnosticOrigin,
   Diagnostics,
 } from './types';
@@ -30,7 +31,8 @@ function normalizeArray<T>(val: undefined | Array<T>): Array<T> {
 }
 
 export function mergeDiagnostics(
-  rootDiag: Diagnostic,...diags: Array<Diagnostic>
+  rootDiag: Diagnostic,
+  ...diags: Array<Diagnostic>
 ): Diagnostic {
   let mergedAdvice: DiagnosticAdvice = [
     ...normalizeArray(rootDiag.description.advice),
@@ -53,10 +55,12 @@ export function mergeDiagnostics(
   };
 }
 
-export function getDiagnosticHeader(opts: {
-  filename: undefined | string;
-  start: undefined | Position;
-}): string {
+export function getDiagnosticHeader(
+  opts: {
+    filename: undefined | string;
+    start: undefined | Position;
+  },
+): string {
   const {start, filename} = opts;
 
   if (filename === undefined) {
@@ -70,15 +74,62 @@ export function getDiagnosticHeader(opts: {
   return markup`<filelink target="${filename}" line="${start.line}" column="${start.column}" />`;
 }
 
-export function deriveRootAdviceFromDiagnostic(diag: Diagnostic, opts: {
-  skipFrame: boolean;
-  includeHeaderInAdvice: boolean;
-  outdated: boolean;
-} = {
-  skipFrame: false,
-  includeHeaderInAdvice: true,
-  outdated: false,
-}): {
+function removePositionFromLocation(loc: DiagnosticLocation): DiagnosticLocation {
+  return {
+    ...loc,
+    start: undefined,
+    end: undefined,
+  };
+}
+
+export function derivePositionlessKeyFromDiagnostic(diag: Diagnostic): string {
+  // Remove all line/column positions from the diagnostic and then JSON stringify it
+  let advice = diag.description.advice || [];
+
+  advice = advice.map((item) => {
+    switch (item.type) {
+      case 'frame':
+        return {
+          ...item,
+          location: removePositionFromLocation(item.location),
+        };
+
+      case 'action':
+        return {
+          ...item,
+          // Command flags could have position information
+          commandFlags: {},
+        };
+
+      default:
+        return item;
+    }
+  });
+
+  diag = {
+    ...diag,
+    description: {
+      ...diag.description,
+      advice,
+    },
+    location: removePositionFromLocation(diag.location),
+  };
+
+  return JSON.stringify(diag);
+}
+
+export function deriveRootAdviceFromDiagnostic(
+  diag: Diagnostic,
+  opts: {
+    skipFrame: boolean;
+    includeHeaderInAdvice: boolean;
+    outdated: boolean;
+  } = {
+    skipFrame: false,
+    includeHeaderInAdvice: true,
+    outdated: false,
+  },
+): {
   advice: DiagnosticAdvice;
   header: string;
 } {
@@ -184,9 +235,9 @@ export function deriveDiagnosticFromError(
   return {
     description: {
       category: opts.category,
-      message: createBlessedDiagnosticMessage(markupMessage === undefined
-        ? escapeMarkup(message)
-        : markupMessage),
+      message: createBlessedDiagnosticMessage(
+        markupMessage === undefined ? escapeMarkup(message) : markupMessage,
+      ),
       advice,
     },
     location: {
@@ -212,7 +263,6 @@ export function getErrorStackAdvice(
 
   if (frames.length === 0 && stack !== undefined) {
     // Just in case we didn't get the frames for some reason
-
     if (title !== undefined) {
       advice.push({
         type: 'log',
@@ -308,9 +358,8 @@ export function addOriginsToDiagnostic(
   origins: Array<DiagnosticOrigin>,
   diag: Diagnostic,
 ): Diagnostic {
-  const newOrigins = diag.origins === undefined
-    ? origins
-    : [...origins, ...diag.origins];
+  const newOrigins =
+    diag.origins === undefined ? origins : [...origins, ...diag.origins];
   return {
     ...diag,
     origins: newOrigins,

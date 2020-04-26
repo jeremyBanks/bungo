@@ -7,25 +7,8 @@
 
 import {ansiEscapes} from '@romejs/string-markup';
 import Reporter from './Reporter';
+import {SelectArguments, SelectOption, SelectOptions} from './types';
 import readline = require('readline');
-
-type SelectOption = {
-  label: string;
-  shortcut?: string;
-  disabled?: boolean;
-  disabledReason?: string;
-};
-
-export type SelectOptions = {
-  [key: string]: SelectOption;
-};
-
-export type SelectArguments<Options> = {
-  options: Options;
-  defaults?: Array<keyof Options>;
-  radio?: boolean;
-  yes?: boolean;
-};
 
 function formatShortcut({shortcut}: SelectOption): string {
   if (shortcut === undefined) {
@@ -35,14 +18,16 @@ function formatShortcut({shortcut}: SelectOption): string {
   }
 }
 
-export default async function select<
-  Options extends SelectOptions
->(reporter: Reporter, message: string, {
-  options,
-  defaults = [],
-  radio = false,
-  yes = false,
-}: SelectArguments<Options>): Promise<Set<keyof Options>> {
+export default async function select<Options extends SelectOptions>(
+  reporter: Reporter,
+  message: string,
+  {
+    options,
+    defaults = [],
+    radio = false,
+    yes = false,
+  }: SelectArguments<Options>,
+): Promise<Set<keyof Options>> {
   const optionNames: Array<keyof Options> = [];
   let optionCount = 0;
   for (const key in options) {
@@ -108,9 +93,10 @@ export default async function select<
       const {label, disabled, disabledReason} = option;
       const shortcut = formatShortcut(option);
 
-      let formattedLabel = optionNames.indexOf(key) === activeOption
-        ? `<underline>${label}</underline>`
-        : label;
+      let formattedLabel =
+        optionNames.indexOf(key) === activeOption
+          ? `<underline>${label}</underline>`
+          : label;
 
       let symbol = '';
       if (radio) {
@@ -129,10 +115,13 @@ export default async function select<
         }
       }
 
-      reporter.logAll(`  ${symbol} ${line}`, {
-        // Don't put a newline on the last option
-        newline: i !== optionNames.length - 1,
-      });
+      reporter.logAll(
+        `  ${symbol} ${line}`,
+        {
+          // Don't put a newline on the last option
+          newline: i !== optionNames.length - 1,
+        },
+      );
     }
   }
   function cleanup() {
@@ -192,10 +181,13 @@ export default async function select<
 
       resolve();
     }
-    onkeypress = (chunk: Buffer, key: {
-      name: string;
-      ctrl: boolean;
-    }) => {
+    onkeypress = (
+      chunk: Buffer,
+      key: {
+        name: string;
+        ctrl: boolean;
+      },
+    ) => {
       // Check if this is an option shortcut
       if (!key.ctrl) {
         for (const optionName in options) {

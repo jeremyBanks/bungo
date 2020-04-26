@@ -9,50 +9,61 @@ import {DiagnosticLocation} from '@romejs/diagnostics';
 import {toKebabCase} from '@romejs/string-utils';
 import {ConsumeSourceLocationRequestTarget} from '@romejs/consume';
 import {Number0, ob1Coerce0, ob1Number0Neg1, ob1Number1} from '@romejs/ob1';
-import {Dict} from '@romejs/typescript-helpers';
+import {Dict, RequiredProps} from '@romejs/typescript-helpers';
+import {FlagValue} from './Parser';
 
 type SerializeCLIData = {
   programName: undefined | string;
   commandName: undefined | string;
-  args: Array<string>;
-  defaultFlags: Dict<unknown>;
-  flags: Dict<unknown>;
-  incorrectCaseFlags: Set<string>;
-  shorthandFlags: Set<string>;
+  args?: Array<string>;
+  defaultFlags?: Dict<FlagValue>;
+  flags?: Dict<FlagValue>;
+  incorrectCaseFlags?: Set<string>;
+  shorthandFlags?: Set<string>;
+  prefix?: string;
 };
 
-export type SerializeCLITarget = {
-  type: 'flag';
-  key: string;
-  target?: ConsumeSourceLocationRequestTarget;
-} | {
-  type: 'arg';
-  key: number;
-} | {
-  type: 'arg-range';
-  from: number;
-  to?: number;
-} | {type: 'none'} | {type: 'command'} | {type: 'program'};
-
-function normalizeFlagValue(val: unknown): unknown {
-  if (val === 'true') {
-    return true;
-  } else if (typeof val === 'object' && val != null) {
-    return String(val);
-  } else {
-    return val;
-  }
-}
+export type SerializeCLITarget =
+  | {
+      type: 'flag';
+      key: string;
+      target?: ConsumeSourceLocationRequestTarget;
+    }
+  | {
+      type: 'arg';
+      key: number;
+    }
+  | {
+      type: 'arg-range';
+      from: number;
+      to?: number;
+    }
+  | {
+      type: 'none';
+    }
+  | {
+      type: 'command';
+    }
+  | {
+      type: 'program';
+    };
 
 export function serializeCLIFlags(
-  data: SerializeCLIData,
+  {
+    args = [],
+    flags = {},
+    programName,
+    commandName,
+    defaultFlags = {},
+    shorthandFlags = new Set(),
+    incorrectCaseFlags = new Set(),
+    prefix = '$ ',
+  }: SerializeCLIData,
   target: SerializeCLITarget,
-): DiagnosticLocation {
-  const {args, flags, programName, commandName, defaultFlags} = data;
-
+): RequiredProps<DiagnosticLocation, 'sourceText'> {
   let startColumn: Number0 = ob1Number0Neg1;
   let endColumn: Number0 = ob1Number0Neg1;
-  let code = `$ `;
+  let code = prefix;
 
   function setStartColumn() {
     startColumn = ob1Coerce0(code.length);
@@ -112,8 +123,11 @@ export function serializeCLIFlags(
     let isEndTarget = isTarget;
 
     // We are the end target if we're within the from-to range or we're greater than from with no to
-    if (target.type === 'arg-range' && i > target.from && (target.to ===
-        undefined || target.to <= i)) {
+    if (
+      target.type === 'arg-range' &&
+      i > target.from &&
+      (target.to === undefined || target.to <= i)
+    ) {
       isEndTarget = true;
     }
 
@@ -124,12 +138,14 @@ export function serializeCLIFlags(
 
   // Add flags
   for (const key in flags) {
-    const val = normalizeFlagValue(flags[key]);
+    const val = flags[key];
 
     // Ignore pointless default values
-    if (val === normalizeFlagValue(defaultFlags[key])) {
+    if (val === defaultFlags[key]) {
       continue;
     }
+
+    const values = Array.isArray(val) ? val : [val];
 
     const isTarget = target.type === 'flag' && key === target.key;
 
@@ -137,25 +153,29 @@ export function serializeCLIFlags(
       setStartColumn();
     }
 
-    const flagPrefix = data.shorthandFlags.has(key) ? '-' : '--';
-    const kebabKey = data.incorrectCaseFlags.has(key) ? key : toKebabCase(key);
-    if (val === false) {
-      code += `${flagPrefix}no-${kebabKey} `;
-    } else {
-      code += `${flagPrefix}${kebabKey} `;
-    }
-
-    // Booleans are always indicated with just their flag
-    if (typeof val !== 'boolean') {
-      // Only point to the value for flags that specify it
-      if (isTarget && target.type === 'flag' && (target.target === 'value' ||
-            target.target ===
-            'inner-value')) {
-        startColumn = ob1Coerce0(code.length);
+    for (const val of values) {
+      const flagPrefix = shorthandFlags.has(key) ? '-' : '--';
+      const kebabKey = incorrectCaseFlags.has(key) ? key : toKebabCase(key);
+      if (val === false) {
+        code += `${flagPrefix}no-${kebabKey} `;
+      } else {
+        code += `${flagPrefix}${kebabKey} `;
       }
 
-      // Number or string
-      code += `${String(val)} `;
+      // Booleans are always indicated with just their flag
+      if (typeof val !== 'boolean') {
+        // Only point to the value for flags that specify it
+        if (
+          isTarget &&
+          target.type === 'flag' &&
+          (target.target === 'value' || target.target === 'inner-value')
+        ) {
+          startColumn = ob1Coerce0(code.length);
+        }
+
+        // Number or string
+        code += `${String(val)} `;
+      }
     }
 
     if (isTarget) {

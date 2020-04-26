@@ -1,41 +1,39 @@
-*   commit 52fb5323954005330a93d1b45d237a3bd930ce4d (HEAD -> master, origin/master, origin/HEAD)
-|\  Merge: b034dd2 a17d65b
-| | Author: Sebastian <853712+sebmck@users.noreply.github.com>
-| | Date:   Fri Apr 24 21:25:53 2020 -0700
-| | 
-| |     Merge pull request #318 from facebookexperimental/remove-format
-| |     
-| |     Remove format project config option, remove enabled config categories
-| | 
-| * commit a17d65bfcd4668d23f4d028cdbf4d2e56f1c7fbe
+*   commit 8d3f8d2192b2b53fc51f66c27bc863b598d886ac (HEAD -> master, origin/master, origin/HEAD)
+|\  Merge: 929a946 ce6c4f8
 | | Author: Sebastian McKenzie <sebmck@fb.com>
-| | Date:   Fri Apr 24 14:26:31 2020 -0700
+| | Date:   Sat Apr 25 17:22:17 2020 -0700
 | | 
-| |     Remove format project config option, remove enabled config categories
+| |     Merge branch 'diokey-formatter_tests'
 | | 
-| * commit 963a4069761f112a9165b1d139037c22c3fa5b28 (grafted)
+| * commit ce6c4f8569ebe0670532f1894e795ebe23b0127c
+| | Author: Sebastian McKenzie <sebmck@fb.com>
+| | Date:   Sat Apr 25 17:22:06 2020 -0700
+| | 
+| |     Update snapshots
+| | 
+| * commit a2b5bc918d50f9be9101eb92f691c6ade16b782b (grafted)
 |   Author: Sebastian McKenzie <sebmck@fb.com>
-|   Date:   Fri Apr 24 14:26:12 2020 -0700
+|   Date:   Sat Apr 25 17:18:40 2020 -0700
 |   
-|       Update snapshots
+|       Merge branch 'formatter_tests' of https://github.com/diokey/rome into diokey-formatter_tests
 |   
-*   commit b034dd22d5f024f87c50eef2872e22b3ad48973a
-|\  Merge: c68d55a ecc39b8
-| | Author: Sebastian <853712+sebmck@users.noreply.github.com>
-| | Date:   Fri Apr 24 15:47:08 2020 -0700
+*   commit 929a94668e2a1ef19508a1f1245302bc08c7d846
+|\  Merge: a6f6bd3 4d2c16a
+| | Author: Sebastian McKenzie <sebmck@fb.com>
+| | Date:   Sat Apr 25 17:16:28 2020 -0700
 | | 
-| |     Merge pull request #319 from facebookexperimental/export-comments
-| |     
-| |     Fix ExportExternalDeclaration specifier comment attachment - fixes #293
+| |     Merge branch 'ooflorent-fmt'
 | | 
-| * commit ecc39b8219f269b606fb712f01c9cd4a9121a921 (grafted)
+| * commit 4d2c16a16c11bd7d1a5cb1bd5f04115e472a7cf4 (grafted)
 |   Author: Sebastian McKenzie <sebmck@fb.com>
-|   Date:   Fri Apr 24 15:02:39 2020 -0700
+|   Date:   Sat Apr 25 17:16:18 2020 -0700
 |   
-|       Add sourceType module to new test
+|       Run formatter
 | 
-* commit c68d55a6a3bdfa357e967afd38eea309486959c8 (grafted)
-  Author: Sebastian McKenzie <sebmck@fb.com>
-  Date:   Fri Apr 24 14:09:01 2020 -0700
+* commit a6f6bd382b310c44dd75f1a0a252a9b7fb017c56 (grafted)
+  Author: Sebastian <853712+sebmck@users.noreply.github.com>
+  Date:   Sat Apr 25 15:28:58 2020 -0700
   
-      Update generated files
+      Merge pull request #321 from facebookexperimental/lint-decisions
+      
+      Make --review generic, add action diagnostic advice, and clean up linter

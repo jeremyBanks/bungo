@@ -36,11 +36,9 @@ export const bindingInjector = createHook<
   [ReferenceIdentifier, AssignmentIdentifier]
 >({
   name: 'bindingInjectorHook',
-
   initialState: {
     bindings: [],
   },
-
   call(
     path: Path,
     state: VariableInjectorState,
@@ -60,7 +58,6 @@ export const bindingInjector = createHook<
       },
     };
   },
-
   exit(path: Path, state: VariableInjectorState): AnyNode {
     const {node} = path;
 
@@ -76,16 +73,17 @@ export const bindingInjector = createHook<
     return {
       ...node,
       body: [
-        variableDeclarationStatement.quick(variableDeclaration.create({
-          kind: 'var',
-          declarations: bindings.map(([name, init]) => {
-            return variableDeclarator.create({
-              id: bindingIdentifier.quick(name),
-              init,
-            });
+        variableDeclarationStatement.quick(
+          variableDeclaration.create({
+            kind: 'var',
+            declarations: bindings.map(([name, init]) => {
+              return variableDeclarator.create({
+                id: bindingIdentifier.quick(name),
+                init,
+              });
+            }),
           }),
-        })),
-
+        ),
         ...node.body,
       ],
     };
@@ -116,12 +114,10 @@ export const commentInjector = createHook<
   CommentInjectorArg,
   string
 >({
-  name: 'bindingInjectorHook',
-
+  name: 'commentInjectorHook',
   initialState: {
     comments: [],
   },
-
   call(path: Path, state: CommentInjectorState, comment: CommentInjectorArg) {
     let commentWithId: AnyComment;
     let comments = state.comments;
@@ -148,7 +144,6 @@ export const commentInjector = createHook<
       },
     };
   },
-
   exit(path: Path, state: CommentInjectorState): AnyNode {
     const {node} = path;
 

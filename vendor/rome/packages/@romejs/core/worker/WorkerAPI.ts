@@ -54,32 +54,28 @@ export default class WorkerAPI {
   worker: Worker;
   logger: Logger;
 
-  interceptAndAddGeneratedToDiagnostics<T extends {diagnostics: Diagnostics}>(
-    val: T,
-    generated: boolean,
-  ): T {
+  interceptAndAddGeneratedToDiagnostics<T extends {
+    diagnostics: Diagnostics;
+  }>(val: T, generated: boolean): T {
     if (generated) {
-      const diagnostics = val.diagnostics.map(
-        (diag) => {
-          const diagAdvice = diag.description.advice === undefined
-            ? []
-            : diag.description.advice;
-          return {
-              ...diag,
-              metadata: {
-                ...diag.description,
-                advice: [
-                  ...diagAdvice,
-                  {
-                    type: 'log',
-                    category: 'warn',
-                    message: 'This diagnostic was generated on a file that has been converted to JavaScript. The source locations are most likely incorrect',
-                  },
-                ],
+      const diagnostics = val.diagnostics.map((diag) => {
+        const diagAdvice =
+          diag.description.advice === undefined ? [] : diag.description.advice;
+        return {
+          ...diag,
+          metadata: {
+            ...diag.description,
+            advice: [
+              ...diagAdvice,
+              {
+                type: 'log',
+                category: 'warn',
+                message: 'This diagnostic was generated on a file that has been converted to JavaScript. The source locations are most likely incorrect',
               },
-            };
-        },
-      );
+            ],
+          },
+        };
+      });
 
       return {...val, diagnostics};
     } else {
@@ -161,21 +157,28 @@ export default class WorkerAPI {
       options,
       parseOptions,
     );
-    return this.interceptAndAddGeneratedToDiagnostics(await compile({
-      ast,
-      sourceText,
-      options: compilerOptions,
-      project,
-      stage,
-    }), generated);
+    return this.interceptAndAddGeneratedToDiagnostics(
+      await compile({
+        ref,
+        ast,
+        sourceText,
+        options: compilerOptions,
+        project,
+        stage,
+      }),
+      generated,
+    );
   }
 
   async parseJS(ref: FileReference, opts: WorkerParseOptions): Promise<Program> {
-    let {ast, generated} = await this.worker.parseJS(ref, {
-      ...opts,
-      sourceType: opts.sourceType,
-      cache: false,
-    });
+    let {ast, generated} = await this.worker.parseJS(
+      ref,
+      {
+        ...opts,
+        sourceType: opts.sourceType,
+        cache: false,
+      },
+    );
 
     return this.interceptAndAddGeneratedToDiagnostics(ast, generated);
   }
@@ -233,34 +236,37 @@ export default class WorkerAPI {
     const {lint} = handler;
     if (lint === undefined && handler.format === undefined) {
       return {
-        fixed: false,
+        saved: false,
         diagnostics: [],
         suppressions: [],
       };
     }
 
     // Catch any diagnostics, in the case of syntax errors etc
-    const res = await catchDiagnostics(() => {
-      if (lint === undefined) {
-        return this._format(ref, parseOptions);
-      } else {
-        return lint({
-          file: ref,
-          project,
-          worker: this.worker,
-          options,
-          parseOptions,
-        });
-      }
-    }, {
-      category: 'lint',
-      message: 'Caught by WorkerAPI.lint',
-    });
+    const res = await catchDiagnostics(
+      () => {
+        if (lint === undefined) {
+          return this._format(ref, parseOptions);
+        } else {
+          return lint({
+            file: ref,
+            project,
+            worker: this.worker,
+            options,
+            parseOptions,
+          });
+        }
+      },
+      {
+        category: 'lint',
+        message: 'Caught by WorkerAPI.lint',
+      },
+    );
 
     // These are fatal diagnostics
     if (res.diagnostics !== undefined) {
       return {
-        fixed: false,
+        saved: false,
         suppressions: [],
         diagnostics: res.diagnostics,
       };
@@ -269,7 +275,7 @@ export default class WorkerAPI {
     // `format` could have return undefined
     if (res.value === undefined) {
       return {
-        fixed: false,
+        saved: false,
         diagnostics: [],
         suppressions: [],
       };
@@ -288,24 +294,24 @@ export default class WorkerAPI {
     );
 
     // If the file has pending fixes
-    const needsFix = formatted !== sourceText;
+    const needsSave = formatted !== sourceText;
 
     // Autofix if necessary
-    if (options.fix && needsFix) {
+    if (options.save && needsSave) {
       // Save the file and evict it from the cache
       await this.worker.writeFile(ref.real, formatted);
 
       // Relint this file without fixing it, we do this to prevent false positive error messages
       return {
-        ...(await this.lint(ref, {...options, fix: false}, parseOptions)),
-        fixed: true,
+        ...(await this.lint(ref, {...options, save: false}, parseOptions)),
+        saved: true,
       };
     }
 
     // If there's no pending fix then no need for diagnostics
-    if (!needsFix) {
+    if (!needsSave) {
       return {
-        fixed: false,
+        saved: false,
         diagnostics,
         suppressions,
       };
@@ -313,15 +319,20 @@ export default class WorkerAPI {
 
     // Add pending autofix diagnostic
     return {
-      fixed: false,
+      saved: false,
       suppressions,
       diagnostics: [
         ...diagnostics,
         {
+          fixable: true,
           location: {
             filename: ref.uid,
           },
-          description: descriptions.LINT.PENDING_FIXES(sourceText, formatted),
+          description: descriptions.LINT.PENDING_FIXES(
+            ref.relative.join(),
+            sourceText,
+            formatted,
+          ),
         },
       ],
     };

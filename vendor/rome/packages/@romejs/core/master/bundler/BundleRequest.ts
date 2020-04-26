@@ -37,19 +37,21 @@ export type BundleOptions = {
 };
 
 export default class BundleRequest {
-  constructor({
-    bundler,
-    reporter,
-    mode,
-    resolvedEntry,
-    options,
-  }: {
-    bundler: Bundler;
-    reporter: Reporter;
-    mode: BundlerMode;
-    resolvedEntry: AbsoluteFilePath;
-    options: BundleOptions;
-  }) {
+  constructor(
+    {
+      bundler,
+      reporter,
+      mode,
+      resolvedEntry,
+      options,
+    }: {
+      bundler: Bundler;
+      reporter: Reporter;
+      mode: BundlerMode;
+      resolvedEntry: AbsoluteFilePath;
+      options: BundleOptions;
+    },
+  ) {
     this.options = options;
     this.reporter = reporter;
     this.bundler = bundler;
@@ -59,17 +61,14 @@ export default class BundleRequest {
     this.resolvedEntry = resolvedEntry;
     this.resolvedEntryUid = bundler.master.projectManager.getUid(resolvedEntry);
 
-      this.diagnostics =
-      bundler.request.createDiagnosticsProcessor(
+    this.diagnostics = bundler.request.createDiagnosticsProcessor({
+      origins: [
         {
-          origins: [
-            {
-              category: 'bundler',
-              message: `Requested bundle for <filelink target="${this.resolvedEntryUid}" />`,
-            },
-          ],
+          category: 'bundler',
+          message: `Requested bundle for <filelink target="${this.resolvedEntryUid}" />`,
         },
-      );
+      ],
+    });
     this.diagnostics.addAllowedUnusedSuppressionPrefix('lint');
 
     this.compiles = new Map();
@@ -158,7 +157,6 @@ export default class BundleRequest {
     }
 
     // Diagnostics would have already been added during the initial DependencyGraph.seed
-
     // We're doing the work of resolving everything again, maybe we should cache it?
     const resolvedImports: BundleCompileResolvedImports = mod.resolveImports().resolved;
 
@@ -220,9 +218,8 @@ export default class BundleRequest {
     // We allow deferring the generation of source maps. We don't do this by default as it's slower than generating them upfront
     // which is what most callers need. But for things like tests, we want to lazily compute the source map only when diagnostics
     // are present.
-    let deferredSourceMaps = !forceSourceMaps &&
-        this.options.deferredSourceMaps ===
-        true;
+    let deferredSourceMaps =
+      !forceSourceMaps && this.options.deferredSourceMaps === true;
     if (deferredSourceMaps) {
       sourceMap.addMaterializer(() => {
         this.stepCombine(order, true);
