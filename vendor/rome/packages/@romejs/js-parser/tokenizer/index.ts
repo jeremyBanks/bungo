@@ -1038,7 +1038,7 @@ export function readRegexp(parser: JSParser): void {
   const start = parser.state.index;
   let escaped;
   let inClass;
-  for (;;) {
+  while (true) {
     if (parser.state.index >= parser.length) {
       parser.addDiagnostic({
         end: parser.getPositionFromIndex(parser.state.index),
@@ -1564,11 +1564,7 @@ function readEscapedChar(
         const codePos = ob1Dec(parser.state.index);
         const octalMatches = parser.input.substr(getIndex(parser) - 1, 3).match(
           /^[0-7]+/,
-        );
-
-        if (octalMatches == null) {
-          throw new Error('No octals found, impossible since we checked it');
-        }
+        )!;
 
         let octalStr = octalMatches[0];
         let octal = parseInt(octalStr, 8);

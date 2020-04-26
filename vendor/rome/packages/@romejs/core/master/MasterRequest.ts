@@ -144,12 +144,22 @@ function hash(val: JSONObject): string {
     : crypto.createHash('sha256').update(JSON.stringify(val)).digest('hex');
 }
 
+export class MasterRequestCancelled extends Error {
+  constructor() {
+    super(
+      'MasterRequest has been cancelled. This error is meant to be seen by Master',
+    );
+  }
+}
+
 export default class MasterRequest {
   constructor(opts: MasterRequestOptions) {
     this.query = opts.query;
     this.master = opts.master;
     this.bridge = opts.client.bridge;
     this.reporter = opts.client.reporter;
+    this.cancelled = false;
+    this.toredown = false;
     this.markerEvent = new Event({
       name: 'MasterRequest.marker',
       onError: this.master.onFatalErrorBound,
@@ -163,11 +173,11 @@ export default class MasterRequest {
     this.id = requestIdCounter++;
     this.markers = [];
     this.start = Date.now();
-
     this.normalizedCommandFlags = {
       flags: {},
       defaultFlags: {},
     };
+    this.client.requestsInFlight.add(this);
   }
 
   start: number;
@@ -181,6 +191,8 @@ export default class MasterRequest {
   endEvent: Event<undefined | MasterQueryResponse, void>;
   normalizedCommandFlags: NormalizedCommandFlags;
   markers: Array<MasterMarker>;
+  cancelled: boolean;
+  toredown: boolean;
 
   async init() {
     if (this.query.requestFlags.collectMarkers) {
@@ -192,9 +204,29 @@ export default class MasterRequest {
     await this.master.handleRequestStart(this);
   }
 
+  checkCancelled() {
+    if (this.cancelled) {
+      throw new MasterRequestCancelled();
+    }
+  }
+
+  cancel() {
+    this.cancelled = true;
+    this.teardown({
+      type: 'CANCELLED',
+    });
+  }
+
   teardown(
     res: undefined | MasterQueryResponse,
   ): undefined | MasterQueryResponse {
+    if (this.toredown) {
+      return;
+    }
+
+    this.toredown = true;
+    this.client.requestsInFlight.delete(this);
+
     // Output timing information
     if (this.query.requestFlags.timing) {
       const end = Date.now();
@@ -295,7 +327,6 @@ export default class MasterRequest {
     return {
       grep: requestFlags.grep,
       inverseGrep: requestFlags.inverseGrep,
-      focus: requestFlags.focus,
       showAllDiagnostics: requestFlags.showAllDiagnostics,
       verboseDiagnostics: requestFlags.verboseDiagnostics,
       maxDiagnostics: requestFlags.maxDiagnostics,
@@ -457,6 +488,8 @@ export default class MasterRequest {
     projects: Set<ProjectDefinition>;
     resolvedArgs: ResolvedArgs;
   }> {
+    this.checkCancelled();
+
     const projects: Set<ProjectDefinition> = new Set();
     const rawArgs = overrideArgs === undefined ? this.query.args : overrideArgs;
     const resolvedArgs: ResolvedArgs = [];
@@ -517,6 +550,8 @@ export default class MasterRequest {
       initial: boolean,
     ) => Promise<void>,
   ): Promise<EventSubscription> {
+    this.checkCancelled();
+
     // Everything needs to be relative to this
     const {resolvedArgs} = await this.resolveFilesFromArgs();
 
@@ -586,12 +621,19 @@ export default class MasterRequest {
     );
     const fileChangeEvent = this.master.fileChangeEvent.subscribe(onChange);
 
+    this.endEvent.subscribe(() => {
+      evictSubscription.unsubscribe();
+      fileChangeEvent.unsubscribe();
+    });
+
     return mergeEventSubscriptions([evictSubscription, fileChangeEvent]);
   }
 
   async getFilesFromArgs(
     opts: MasterRequestGetFilesOptions = {},
   ): Promise<MasterRequestGetFilesResult> {
+    this.checkCancelled();
+
     const {master} = this;
     const {configCategory, ignoreProjectIgnore} = opts;
     const {projects, resolvedArgs} = await this.resolveFilesFromArgs(opts.args);
@@ -648,7 +690,7 @@ export default class MasterRequest {
             advice.push({
               type: 'log',
               category: 'info',
-              message: 'The following files were ignored',
+              text: 'The following files were ignored',
             });
 
             advice.push({
@@ -676,7 +718,7 @@ export default class MasterRequest {
               advice.push({
                 type: 'log',
                 category: 'info',
-                message: 'Ignore patterns were defined here',
+                text: 'Ignore patterns were defined here',
               });
 
               advice.push({
@@ -773,7 +815,7 @@ export default class MasterRequest {
             {
               type: 'log',
               category: 'info',
-              message: markup`Error occurred while requesting ${method} for <filelink emphasis target="${ref.uid}" />`,
+              text: markup`Error occurred while requesting ${method} for <filelink emphasis target="${ref.uid}" />`,
             },
           ],
         });
@@ -788,6 +830,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     content: string,
   ): Promise<void> {
+    this.checkCancelled();
+
     await this.wrapRequestDiagnostic(
       'updateBuffer',
       path,
@@ -800,6 +844,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     opts: WorkerParseOptions,
   ): Promise<Program> {
+    this.checkCancelled();
+
     return this.wrapRequestDiagnostic(
       'parse',
       path,
@@ -811,6 +857,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     optionsWithoutModSigs: Omit<WorkerLintOptions, 'prefetchedModuleSignatures'>,
   ): Promise<WorkerLintResult> {
+    this.checkCancelled();
+
     const {cache} = this.master;
     const cacheEntry = await cache.get(path);
 
@@ -852,6 +900,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     parseOptions: WorkerParseOptions,
   ): Promise<undefined | WorkerFormatResult> {
+    this.checkCancelled();
+
     return await this.wrapRequestDiagnostic(
       'format',
       path,
@@ -865,6 +915,8 @@ export default class MasterRequest {
     options: WorkerCompilerOptions,
     parseOptions: WorkerParseOptions,
   ): Promise<WorkerCompileResult> {
+    this.checkCancelled();
+
     const {cache} = this.master;
 
     // Create a cache key comprised of the stage and hash of the options
@@ -917,6 +969,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     parseOptions: WorkerParseOptions,
   ): Promise<WorkerAnalyzeDependencyResult> {
+    this.checkCancelled();
+
     const {cache} = this.master;
 
     const cacheEntry = await cache.get(path);
@@ -949,6 +1003,8 @@ export default class MasterRequest {
     path: AbsoluteFilePath,
     parseOptions: WorkerParseOptions,
   ): Promise<ModuleSignature> {
+    this.checkCancelled();
+
     const {cache} = this.master;
 
     const cacheEntry = await cache.get(path);
@@ -973,6 +1029,8 @@ export default class MasterRequest {
   async maybePrefetchModuleSignatures(
     path: AbsoluteFilePath,
   ): Promise<PrefetchedModuleSignatures> {
+    this.checkCancelled();
+
     const {projectManager} = this.master;
 
     const prefetchedModuleSignatures: PrefetchedModuleSignatures = {};
