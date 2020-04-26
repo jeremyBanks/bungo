@@ -3,7 +3,7 @@ import { test } from "rome";
 
 import { ProjectGraph } from "./project-graph";
 
-test("bungo a project", (t) => {
+test("bungo a project", (assert) => {
   const project = ProjectGraph.fromData({
     rootPath: createPath("/src/").assertAbsolute(),
     files: Object.entries({
@@ -48,6 +48,12 @@ test("bungo a project", (t) => {
     "/src/user.ts": "/src/business/user.ts",
     "/src/property.ts": "/src/business/property.ts",
   };
+
+  assert.is(
+    project.updatedPaths(),
+    expectedMoves,
+    "project must generate correct updated paths for all files"
+  );
 
   for (const file of project.fileNodes.values()) {
     if (file.dependencies.size === 0 && file.dependents.size === 0) {

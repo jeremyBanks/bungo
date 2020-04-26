@@ -72,7 +72,12 @@ export class ProjectGraph {
   }
 
   public updatedPaths(): Record<string, string> {
-    return {};
+    const moves: Record<string, string> = {};
+    for (const files of this.fileNodes) {
+      const path = files.originalPath.toString();
+      moves[path] = path;
+    }
+    return moves;
   }
 }
 
@@ -81,12 +86,14 @@ class FileNode {
     readonly originalPath: AbsoluteFilePath,
     readonly originalBody: string,
     readonly dependencies: Set<FileNode> = new Set(),
-    readonly dependents: Set<FileNode> = new Set()
+    readonly dependents: Set<FileNode> = new Set(),
+    public parent: FileNode | undefined = undefined
   ) {
     this.originalPath = originalPath;
     this.originalBody = originalBody;
     this.dependencies = dependencies;
     this.dependents = dependents;
+    this.parent = parent;
   }
 }
 
