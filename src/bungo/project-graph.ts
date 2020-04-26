@@ -73,12 +73,6 @@ export class ProjectGraph {
     const fileNodes = new Set(fileNodesByOriginalPath.values());
 
     const walkNode = (node: FileNode, parent?: FileNode) => {
-      console.log(
-        `${node.originalPath.toString()} from ${
-          (node.originalPath && node.originalPath.toString()) || "root"
-        }`
-      );
-
       if (!node.parent) {
         // this node hasn't been visited yet.
         node.parent = parent;
