@@ -166,7 +166,7 @@ function generateDiffHint(diffs: Diffs): undefined | DiagnosticAdviceItem {
     return {
       type: 'log',
       category: 'info',
-      text: 'Only difference is leading and trailing whitespace',
+      message: 'Only difference is leading and trailing whitespace',
     };
   }
 
@@ -175,7 +175,7 @@ function generateDiffHint(diffs: Diffs): undefined | DiagnosticAdviceItem {
     return {
       type: 'log',
       category: 'info',
-      text: 'Identical except the received uses CRLF newlines, while the expected does not',
+      message: 'Identical except the received uses CRLF newlines, while the expected does not',
     };
   }
 
@@ -184,7 +184,7 @@ function generateDiffHint(diffs: Diffs): undefined | DiagnosticAdviceItem {
     return {
       type: 'log',
       category: 'info',
-      text: 'Identical except the expected uses CRLF newlines, while the received does not',
+      message: 'Identical except the expected uses CRLF newlines, while the received does not',
     };
   }
 
@@ -207,17 +207,17 @@ function printDiff(
 
   const {legend} = item;
   if (legend !== undefined) {
-    opts.reporter.br();
+    opts.reporter.spacer();
     opts.reporter.logAll(`<error>- ${escapeMarkup(legend.delete)}</error>`);
     opts.reporter.logAll(`<success>+ ${escapeMarkup(legend.add)}</success>`);
-    opts.reporter.br();
+    opts.reporter.spacer();
   }
 
   const hint = generateDiffHint(item.diff);
   if (hint !== undefined) {
-    opts.reporter.br();
+    opts.reporter.spacer();
     printAdvice(hint, opts);
-    opts.reporter.br();
+    opts.reporter.spacer();
   }
 
   return {
@@ -347,11 +347,10 @@ function printStacktrace(
     diagnostic.description.advice !== undefined &&
     diagnostic.description.advice[0] === item;
   if (!isFirstPart) {
-    const {title} = item;
-    if (title !== undefined) {
-      opts.reporter.info(escapeMarkup(title));
-      opts.reporter.br(true);
-    }
+    opts.reporter.info(
+      item.title === undefined ? 'Stack trace' : escapeMarkup(item.title),
+    );
+    opts.reporter.forceSpacer();
   }
 
   opts.reporter.processedList(
@@ -441,7 +440,7 @@ function printStacktrace(
           opts,
         );
         if (!skipped) {
-          opts.reporter.br(true);
+          opts.reporter.forceSpacer();
           shownCodeFrames++;
         }
       }
@@ -460,7 +459,7 @@ function printLog(
   opts: AdvicePrintOptions,
 ): PrintAdviceResult {
   const {reporter} = opts;
-  const {text: message, category} = item;
+  const {message, category} = item;
 
   if (message !== undefined) {
     switch (category) {

@@ -40,6 +40,7 @@ export default async function executeMain(
 
   // Create global context
   const sandbox: UnknownObject = {
+    ...globals,
     process: {
       argv: [process.argv[0], filename],
       __proto__: process,
@@ -57,7 +58,6 @@ export default async function executeMain(
     console,
     __dirname: path.getParent().join(),
     __filename: filename,
-    ...globals,
   };
   sandbox.global = sandbox;
   const context = vm.createContext(sandbox);

@@ -13,6 +13,7 @@ import {
   Diagnostics,
   DiagnosticsProcessor,
   deriveRootAdviceFromDiagnostic,
+  getDiagnosticHeader,
 } from '@romejs/diagnostics';
 import {Reporter} from '@romejs/cli-reporter';
 import {
@@ -22,7 +23,11 @@ import {
   DiagnosticsPrinterOptions,
 } from './types';
 
-import {formatAnsi, markup, markupToPlainText} from '@romejs/string-markup';
+import {
+  formatAnsi,
+  humanizeMarkupFilename,
+  markup,
+} from '@romejs/string-markup';
 import {toLines} from './utils';
 import printAdvice from './printAdvice';
 
@@ -84,6 +89,7 @@ type BeforeFooterPrintFn = (reporter: Reporter, error: boolean) => void;
 export const DEFAULT_PRINTER_FLAGS: DiagnosticsPrinterFlags = {
   grep: '',
   inverseGrep: false,
+  focus: '',
   showAllDiagnostics: true,
   fieri: false,
   verboseDiagnostics: false,
@@ -202,8 +208,43 @@ export default class DiagnosticsPrinter extends Error {
     return this.processor.getSortedDiagnostics();
   }
 
+  isFocused(diag: Diagnostic): boolean {
+    const focusFlag = this.flags.focus;
+    const focusEnabled = focusFlag !== undefined && focusFlag !== '';
+
+    const {filename, start, end} = diag.location;
+
+    // If focus is enabled, exclude locationless errors
+    if (focusEnabled && (filename === undefined || start === undefined)) {
+      return true;
+    }
+
+    // If focus is enabled, check if we should ignore this message
+    if (filename !== undefined && start !== undefined && end !== undefined) {
+      const niceFilename = humanizeMarkupFilename(
+        filename,
+        this.reporter.markupOptions,
+      );
+      const focusId = getDiagnosticHeader({
+        filename,
+        start,
+      });
+      if (focusEnabled && focusId !== focusFlag && focusId !== niceFilename) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   shouldIgnore(diag: Diagnostic): boolean {
-    const {grep, inverseGrep} = this.flags;
+    const {focus, grep, inverseGrep} = this.flags;
+    const focusEnabled = focus !== undefined && focus !== '';
+
+    // If focus is enabled, exclude locationless errors
+    if (focusEnabled && this.isFocused(diag) === false) {
+      return true;
+    }
 
     // An empty grep pattern means show everything
     if (grep === undefined || grep === '') {
@@ -212,9 +253,7 @@ export default class DiagnosticsPrinter extends Error {
 
     // Match against the supplied grep pattern
     let ignored =
-      markupToPlainText(diag.description.message.value).toLowerCase().includes(
-        grep,
-      ) === false;
+      diag.description.message.value.toLowerCase().includes(grep) === false;
     if (inverseGrep) {
       ignored = !ignored;
     }
@@ -349,11 +388,11 @@ export default class DiagnosticsPrinter extends Error {
   }
 
   displayDiagnostics(diagnostics: Diagnostics) {
-    const restoreRedirect = this.reporter.redirectOutToErr(true);
+    this.reporter.redirectOutToErr(true);
     for (const diag of diagnostics) {
       this.displayDiagnostic(diag);
     }
-    this.reporter.redirectOutToErr(restoreRedirect);
+    this.reporter.redirectOutToErr(false);
   }
 
   displayDiagnostic(diag: Diagnostic) {
@@ -362,7 +401,9 @@ export default class DiagnosticsPrinter extends Error {
     const {advice} = diag.description;
 
     // Determine if we should skip showing the frame at the top of the diagnostic output
+
     // We check if there are any frame advice entries that match us exactly, this is
+
     // useful for stuff like reporting call stacks
     let skipFrame = false;
     if (start !== undefined && end !== undefined && advice !== undefined) {
@@ -413,13 +454,13 @@ export default class DiagnosticsPrinter extends Error {
         outdatedAdvice.push({
           type: 'log',
           category: 'warn',
-          text: 'This file has been changed since the diagnostic was produced and may be out of date',
+          message: 'This file has been changed since the diagnostic was produced and may be out of date',
         });
       } else {
         outdatedAdvice.push({
           type: 'log',
           category: 'warn',
-          text: 'This diagnostic may be out of date as it relies on the following files that have been changed since the diagnostic was generated',
+          message: 'This diagnostic may be out of date as it relies on the following files that have been changed since the diagnostic was generated',
         });
 
         outdatedAdvice.push({
@@ -464,7 +505,7 @@ export default class DiagnosticsPrinter extends Error {
           },
         );
         if (res.printed) {
-          reporter.br();
+          reporter.spacer();
         }
         if (res.truncated) {
           this.hasTruncatedDiagnostics = true;
@@ -476,9 +517,9 @@ export default class DiagnosticsPrinter extends Error {
         const {origins} = diag;
 
         if (origins !== undefined && origins.length > 0) {
-          reporter.br();
+          reporter.spacer();
           reporter.info('Why are you seeing this diagnostic?');
-          reporter.br();
+          reporter.forceSpacer();
           reporter.list(
             origins.map((origin) => {
               let res = `<emphasis>${origin.category}</emphasis>`;
@@ -524,9 +565,7 @@ export default class DiagnosticsPrinter extends Error {
     const isError = problemCount > 0;
 
     if (isError) {
-      const restoreRedirect = reporter.redirectOutToErr(true);
       reporter.hr();
-      reporter.redirectOutToErr(restoreRedirect);
     }
 
     if (this.hasTruncatedDiagnostics) {
@@ -593,7 +632,10 @@ export default class DiagnosticsPrinter extends Error {
     }
 
     const displayableProblems = this.getDisplayedProblemsCount();
-    let str = `Found <number emphasis>${displayableProblems}</number> <grammarNumber plural="problems" singular="problem">${displayableProblems}</grammarNumber>`;
+    let str = `Found <number emphasis>${displayableProblems}</number> problem`;
+    if (displayableProblems > 1 || displayableProblems === 0) {
+      str += 's';
+    }
 
     if (filteredCount > 0) {
       str += `<dim> (${filteredCount} filtered)</dim>`;

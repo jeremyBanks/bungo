@@ -171,11 +171,8 @@ async function createRegularWatcher(
         return;
       }
 
-      let recursive = true;
-
       if (process.platform === 'linux') {
         // Node on Linux doesn't support recursive directory watching so we need an fs.watch for every directory...
-        recursive = false;
       } else if (!folderPath.equal(projectFolderPath)) {
         // If we're on any other platform then only watch the root project folder
         return;
@@ -183,7 +180,7 @@ async function createRegularWatcher(
 
       const watcher = watch(
         folderPath,
-        {recursive, persistent: false},
+        {recursive: true, persistent: false},
         (eventType, filename) => {
           if (filename === null) {
             // TODO not sure how we want to handle this?
@@ -846,9 +843,7 @@ export default class MemoryFileSystem {
       }
 
       const manifest = this.getManifest(packagePath);
-
-      // rome-suppress-next-line lint/camelCase
-      if ((manifest?.raw)?.haste_commonjs === true) {
+      if (manifest !== undefined && manifest.raw.hasteCommonjs === true) {
         return false;
       }
     }
@@ -978,7 +973,10 @@ export default class MemoryFileSystem {
     const ignoresByProject: Map<ProjectDefinition, PathPatterns> = new Map();
 
     while (crawl.length > 0) {
-      const path = crawl.pop()!;
+      const path = crawl.pop();
+      if (path === undefined) {
+        throw new Error('crawl.length already validated');
+      }
 
       const project = this.master.projectManager.assertProjectExisting(path);
 

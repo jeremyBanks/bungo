@@ -110,11 +110,7 @@ export default class BridgeEvent<
       // @ts-ignore
       callbacks.resolve(data.value);
     } else if (data.responseStatus === 'error') {
-      try {
-        callbacks.reject(this.bridge.buildError(data.value, data.metadata));
-      } catch (err) {
-        callbacks.reject(err);
-      }
+      callbacks.reject(this.bridge.buildError(data.value, data.metadata));
     } else {
       // ???
     }

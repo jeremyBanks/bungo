@@ -1,28 +1,39 @@
-* commit 874f6b7bd2377bbac16e96157567690c18edc436 (HEAD -> master, origin/master, origin/HEAD)
-| Author: Sebastian McKenzie <sebmck@fb.com>
-| Date:   Sat Apr 25 23:20:38 2020 -0700
-| 
-|     Fix
-|   
-*   commit 44a383442ba157575a9d1bc0baa33ea4dadc7021
-|\  Merge: 3ba9094 25c479a
-| | Author: Sebastian <853712+sebmck@users.noreply.github.com>
-| | Date:   Sat Apr 25 23:18:15 2020 -0700
+*   commit 8d3f8d2192b2b53fc51f66c27bc863b598d886ac (HEAD -> master, origin/master, origin/HEAD)
+|\  Merge: 929a946 ce6c4f8
+| | Author: Sebastian McKenzie <sebmck@fb.com>
+| | Date:   Sat Apr 25 17:22:17 2020 -0700
 | | 
-| |     Merge pull request #332 from facebookexperimental/misc-changes
-| |     
-| |     Misc changes
+| |     Merge branch 'diokey-formatter_tests'
 | | 
-| * commit 25c479ab2f97316f75ea966c18ca155eab141bd3 (grafted)
+| * commit ce6c4f8569ebe0670532f1894e795ebe23b0127c
+| | Author: Sebastian McKenzie <sebmck@fb.com>
+| | Date:   Sat Apr 25 17:22:06 2020 -0700
+| | 
+| |     Update snapshots
+| | 
+| * commit a2b5bc918d50f9be9101eb92f691c6ade16b782b (grafted)
 |   Author: Sebastian McKenzie <sebmck@fb.com>
-|   Date:   Sat Apr 25 23:17:20 2020 -0700
+|   Date:   Sat Apr 25 17:18:40 2020 -0700
 |   
-|       Add CLI global flag descriptions
+|       Merge branch 'formatter_tests' of https://github.com/diokey/rome into diokey-formatter_tests
+|   
+*   commit 929a94668e2a1ef19508a1f1245302bc08c7d846
+|\  Merge: a6f6bd3 4d2c16a
+| | Author: Sebastian McKenzie <sebmck@fb.com>
+| | Date:   Sat Apr 25 17:16:28 2020 -0700
+| | 
+| |     Merge branch 'ooflorent-fmt'
+| | 
+| * commit 4d2c16a16c11bd7d1a5cb1bd5f04115e472a7cf4 (grafted)
+|   Author: Sebastian McKenzie <sebmck@fb.com>
+|   Date:   Sat Apr 25 17:16:18 2020 -0700
+|   
+|       Run formatter
 | 
-* commit 3ba909422f363429bcedf00ae8b886f01d53d546 (grafted)
+* commit a6f6bd382b310c44dd75f1a0a252a9b7fb017c56 (grafted)
   Author: Sebastian <853712+sebmck@users.noreply.github.com>
-  Date:   Sat Apr 25 18:55:43 2020 -0700
+  Date:   Sat Apr 25 15:28:58 2020 -0700
   
-      Merge pull request #331 from facebookexperimental/remove-stale
+      Merge pull request #321 from facebookexperimental/lint-decisions
       
-      Remove some unnecessary code
+      Make --review generic, add action diagnostic advice, and clean up linter

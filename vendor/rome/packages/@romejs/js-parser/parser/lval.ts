@@ -22,7 +22,6 @@ import {
   AnyParamBindingPattern,
   AnyTargetAssignmentPattern,
   AnyTargetBindingPattern,
-  ArrayHole,
   AssignmentIdentifier,
   AssignmentObjectPatternProperty,
   BindingArrayPattern,
@@ -48,12 +47,12 @@ import {
 import {descriptions} from '@romejs/diagnostics';
 import {ob1Get0} from '@romejs/ob1';
 import {
-  parseArrayHole,
   parseBindingIdentifier,
   toAssignmentIdentifier,
   toBindingIdentifier,
   toReferenceIdentifier,
 } from './expression';
+
 const VALID_REST_ARGUMENT_TYPES = ['Identifier', 'MemberExpression'];
 
 type ToAssignmentPatternNode =
@@ -324,7 +323,7 @@ export function toBindingPattern(
         ...binding,
         type: 'BindingArrayPattern',
         elements: binding.elements.map((elem) =>
-          elem.type === 'ArrayHole'
+          elem === undefined
             ? elem
             : toParamBindingPattern(parser, elem, contextDescription)
         ),
@@ -431,7 +430,7 @@ export function toAssignmentObjectProperty(
 export function toAssignableList(
   parser: JSParser,
   exprList: Array<
-    | ArrayHole
+    | undefined
     | AnyAssignmentPattern
     | AmbiguousFlowTypeCastExpression
     | SpreadElement
@@ -439,10 +438,10 @@ export function toAssignableList(
   >,
   contextDescription: string,
 ): {
-  list: Array<ArrayHole | AnyAssignmentPattern>;
+  list: Array<undefined | AnyAssignmentPattern>;
   rest: undefined | AnyTargetAssignmentPattern;
 } {
-  const newList: Array<ArrayHole | AnyAssignmentPattern> = [];
+  const newList: Array<AnyAssignmentPattern> = [];
   let rest: undefined | AnyTargetAssignmentPattern;
 
   let end = exprList.length;
@@ -480,6 +479,9 @@ export function toAssignableList(
   // Turn type casts that we found in function parameter head into type annotated params
   for (let i = 0; i < end; i++) {
     const expr = exprList[i];
+    if (expr === undefined) {
+      continue;
+    }
 
     if (expr.type === 'AmbiguousFlowTypeCastExpression') {
       exprList[i] = ambiguousTypeCastToParameter(parser, expr);
@@ -495,14 +497,12 @@ export function toAssignableList(
 
   for (let i = 0; i < end; i++) {
     const elt = exprList[i];
+    if (elt === undefined) {
+      continue;
+    }
 
     if (elt.type === 'SpreadElement') {
       raiseRestNotLast(parser, parser.getLoc(elt));
-    }
-
-    if (elt.type === 'ArrayHole') {
-      newList.push(elt);
-      continue;
     }
 
     const assign = toAssignmentPattern(parser, elt, contextDescription);
@@ -514,7 +514,7 @@ export function toAssignableList(
 
 export function toFunctionParamsBindingList(
   parser: JSParser,
-  exprList: Array<ArrayHole | ToReferencedItem>,
+  exprList: Array<undefined | ToReferencedItem>,
   contextDescription: string,
 ): {
   params: Array<BindingAssignmentPattern | AnyTargetBindingPattern>;
@@ -579,12 +579,12 @@ export function toReferencedList(
 
 export function toReferencedListOptional(
   parser: JSParser,
-  exprList: Array<ArrayHole | ToReferencedItem>,
+  exprList: Array<undefined | ToReferencedItem>,
   isParenthesizedExpr?: boolean,
-): Array<ArrayHole | SpreadElement | AnyExpression> {
+): Array<undefined | SpreadElement | AnyExpression> {
   for (let i = 0; i < exprList.length; i++) {
     const expr = exprList[i];
-    if (expr.type !== 'ArrayHole') {
+    if (expr !== undefined) {
       exprList[i] = toReferencedItem(
         parser,
         expr,
@@ -692,9 +692,9 @@ export function toReferencedListDeep(
 
 export function toReferencedListDeepOptional(
   parser: JSParser,
-  exprList: Array<ArrayHole | ToReferencedItem>,
+  exprList: Array<undefined | ToReferencedItem>,
   isParenthesizedExpr?: boolean,
-): Array<ArrayHole | AnyExpression | SpreadElement> {
+): Array<undefined | AnyExpression | SpreadElement> {
   const refList = toReferencedListOptional(
     parser,
     exprList,
@@ -706,11 +706,11 @@ export function toReferencedListDeepOptional(
 
 function toReferencedListDeepItems(
   parser: JSParser,
-  exprList: Array<ArrayHole | ToReferencedItem>,
+  exprList: Array<undefined | ToReferencedItem>,
 ) {
   for (let i = 0; i < exprList.length; i++) {
     const expr = exprList[i];
-    if (expr.type === 'ArrayExpression') {
+    if (expr !== undefined && expr.type === 'ArrayExpression') {
       toReferencedListDeepOptional(parser, expr.elements);
     }
   }
@@ -782,13 +782,13 @@ function parseArrayPattern(parser: JSParser): BindingArrayPattern {
 export function parseBindingList(
   parser: JSParser,
   openContext: OpeningContext,
-  allowHoles: boolean = false,
+  allowEmpty: boolean = false,
   allowTSModifiers: boolean = false,
 ): {
-  list: Array<ArrayHole | AnyParamBindingPattern>;
+  list: Array<undefined | AnyParamBindingPattern>;
   rest: undefined | AnyTargetBindingPattern;
 } {
-  const elts: Array<ArrayHole | AnyParamBindingPattern> = [];
+  const elts: Array<undefined | AnyParamBindingPattern> = [];
   let rest: undefined | AnyTargetBindingPattern;
 
   let first = true;
@@ -811,8 +811,8 @@ export function parseBindingList(
       }
     }
 
-    if (allowHoles && parser.match(tt.comma)) {
-      elts.push(parseArrayHole(parser));
+    if (allowEmpty && parser.match(tt.comma)) {
+      elts.push(undefined);
     } else if (parser.match(openContext.close)) {
       parser.expectClosing(openContext);
       break;
@@ -997,7 +997,7 @@ const ALLOWED_PARENTHESIZED_LVAL_TYPES = [
 // to.
 export function checkLVal(
   parser: JSParser,
-  expr: ArrayHole | AnyAssignmentPattern | AnyBindingPattern | AnyExpression,
+  expr: AnyAssignmentPattern | AnyBindingPattern | AnyExpression,
   maybeIsBinding: undefined | boolean,
   checkClashes: undefined | Map<string, AnyNode>,
   contextDescription: string,
@@ -1111,13 +1111,15 @@ export function checkLVal(
       }
 
       for (const elem of expr.elements) {
-        checkLVal(
-          parser,
-          elem,
-          isBinding,
-          checkClashes,
-          'array destructuring pattern',
-        );
+        if (elem) {
+          checkLVal(
+            parser,
+            elem,
+            isBinding,
+            checkClashes,
+            'array destructuring pattern',
+          );
+        }
       }
       break;
     }

@@ -70,7 +70,7 @@ export default class WorkerAPI {
               {
                 type: 'log',
                 category: 'warn',
-                text: 'This diagnostic was generated on a file that has been converted to JavaScript. The source locations are most likely incorrect',
+                message: 'This diagnostic was generated on a file that has been converted to JavaScript. The source locations are most likely incorrect',
               },
             ],
           },
@@ -112,7 +112,7 @@ export default class WorkerAPI {
       return UNKNOWN_ANALYZE_DEPENDENCIES_RESULT;
     }
 
-    return await analyzeDependencies({
+    return analyzeDependencies({
       file: ref,
       project,
       worker: this.worker,

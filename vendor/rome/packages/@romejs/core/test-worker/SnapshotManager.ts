@@ -5,11 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {
-  AbsoluteFilePath,
-  AbsoluteFilePathMap,
-  createAbsoluteFilePath,
-} from '@romejs/path';
+import {AbsoluteFilePath, AbsoluteFilePathMap} from '@romejs/path';
 import {exists, readFileText, unlink, writeFile} from '@romejs/fs';
 import {TestRunnerOptions} from '../master/testing/types';
 import TestWorkerRunner from './TestWorkerRunner';
@@ -36,13 +32,11 @@ type SnapshotEntry = {
 };
 
 type Snapshot = {
-  existsOnDisk: boolean;
+  exists: boolean;
   used: boolean;
   raw: string;
   entries: Map<string, SnapshotEntry>;
 };
-
-export const SNAPSHOT_EXT = '.test.md';
 
 function buildEntriesKey(testName: string, entryName: string): string {
   return `${testName}#${entryName}`;
@@ -51,7 +45,7 @@ function buildEntriesKey(testName: string, entryName: string): string {
 export default class SnapshotManager {
   constructor(runner: TestWorkerRunner, testPath: AbsoluteFilePath) {
     this.defaultSnapshotPath = testPath.getParent().append(
-      `${testPath.getExtensionlessBasename()}${SNAPSHOT_EXT}`,
+      `${testPath.getExtensionlessBasename()}.test.md`,
     );
     this.testPath = testPath;
 
@@ -64,27 +58,15 @@ export default class SnapshotManager {
   loadingSnapshotCount: number;
   testPath: AbsoluteFilePath;
   defaultSnapshotPath: AbsoluteFilePath;
+
   snapshots: AbsoluteFilePathMap<Snapshot>;
+
   runner: TestWorkerRunner;
   options: TestRunnerOptions;
 
   teardown() {
     if (this.loadingSnapshotCount > 0) {
       throw new Error();
-    }
-  }
-
-  normalizeSnapshotPath(filename: undefined | string): AbsoluteFilePath {
-    if (filename === undefined) {
-      return this.defaultSnapshotPath;
-    }
-
-    const path = createAbsoluteFilePath(filename);
-    const ext = path.getExtensions();
-    if (ext.endsWith(SNAPSHOT_EXT)) {
-      return path;
-    } else {
-      return path.addExtension(SNAPSHOT_EXT);
     }
   }
 
@@ -120,7 +102,7 @@ export default class SnapshotManager {
     const nodes = parser.parse();
 
     const snapshot: Snapshot = {
-      existsOnDisk: true,
+      exists: true,
       used: false,
       raw: parser.input,
       entries: new Map(),
@@ -128,7 +110,10 @@ export default class SnapshotManager {
     this.snapshots.set(path, snapshot);
 
     while (nodes.length > 0) {
-      const node = nodes.shift()!;
+      const node = nodes.shift();
+      if (node === undefined) {
+        throw new Error('Impossible');
+      }
 
       if (node.type === 'Heading' && node.level === 1) {
         // Title
@@ -223,7 +208,10 @@ export default class SnapshotManager {
     const testNames = Array.from(testNameToEntries.keys()).sort();
 
     for (const testName of testNames) {
-      const entries = testNameToEntries.get(testName)!;
+      const entries = testNameToEntries.get(testName);
+      if (entries === undefined) {
+        throw new Error('Impossible');
+      }
 
       lines.push(`## \`${testName}\``);
       pushNewline();
@@ -231,7 +219,10 @@ export default class SnapshotManager {
       const entryNames = Array.from(entries.keys()).sort();
 
       for (const snapshotName of entryNames) {
-        const entry = entries.get(snapshotName)!;
+        const entry = entries.get(snapshotName);
+        if (entry === undefined) {
+          throw new Error('Impossible');
+        }
 
         const {value} = entry;
         const language = entry.language === undefined ? '' : entry.language;
@@ -259,16 +250,14 @@ export default class SnapshotManager {
       return;
     }
 
-    for (const [path, {used, existsOnDisk, raw, entries}] of this.snapshots) {
+    for (const [path, {used, exists, raw, entries}] of this.snapshots) {
       const lines = this.buildSnapshot(entries.values());
       const formatted = lines.join('\n');
-
-      let event: undefined | 'delete' | 'update' | 'create';
 
       if (this.options.freezeSnapshots) {
         if (!used) {
           await this.emitDiagnostic(descriptions.SNAPSHOTS.REDUNDANT);
-        } else if (!existsOnDisk) {
+        } else if (!exists) {
           await this.emitDiagnostic(descriptions.SNAPSHOTS.MISSING);
         } else if (formatted !== raw) {
           await this.emitDiagnostic(
@@ -276,22 +265,13 @@ export default class SnapshotManager {
           );
         }
       } else {
-        if (existsOnDisk && !used) {
+        if (exists && !used) {
           // If a snapshot wasn't used or is empty then delete it!
           await unlink(path);
-          event = 'delete';
         } else if (used && formatted !== raw) {
           // Fresh snapshot!
           await writeFile(path, formatted);
-          event = existsOnDisk ? 'update' : 'create';
         }
-      }
-
-      if (event !== undefined) {
-        await this.runner.bridge.snapshotUpdated.call({
-          filename: path.join(),
-          event,
-        });
       }
     }
   }
@@ -299,9 +279,8 @@ export default class SnapshotManager {
   async get(
     testName: string,
     entryName: string,
-    optionalFilename: undefined | string,
+    snapshotPath: AbsoluteFilePath = this.defaultSnapshotPath,
   ): Promise<undefined | string> {
-    const snapshotPath = this.normalizeSnapshotPath(optionalFilename);
     let snapshot = this.snapshots.get(snapshotPath);
 
     if (snapshot === undefined) {
@@ -328,21 +307,20 @@ export default class SnapshotManager {
       entryName,
       value,
       language,
-      optionalFilename,
+      snapshotPath = this.defaultSnapshotPath,
     }: {
       testName: string;
       entryName: string;
       value: string;
       language: undefined | string;
-      optionalFilename: undefined | string;
+      snapshotPath: undefined | AbsoluteFilePath;
     },
   ) {
-    const snapshotPath = this.normalizeSnapshotPath(optionalFilename);
     let snapshot = this.snapshots.get(snapshotPath);
     if (snapshot === undefined) {
       snapshot = {
         raw: '',
-        existsOnDisk: false,
+        exists: false,
         used: true,
         entries: new Map(),
       };

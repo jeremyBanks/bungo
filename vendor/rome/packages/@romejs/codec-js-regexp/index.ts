@@ -1126,7 +1126,10 @@ export const createRegExpParser = createParser((ParserCore) =>
       let expression: undefined | RegExpSubExpression | RegExpAlternation;
 
       while (alternations.length > 0) {
-        const alternation = alternations.shift()!;
+        const alternation = alternations.shift();
+        if (alternation === undefined) {
+          throw new Error('Impossible. We check it above.');
+        }
 
         const sub: RegExpSubExpression = {
           type: 'RegExpSubExpression',

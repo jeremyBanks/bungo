@@ -163,7 +163,7 @@ export async function createFixtureTests(
         t.addToAdvice({
           type: 'log',
           category: 'info',
-          text: 'Fixture options',
+          message: 'Fixture options',
         });
 
         t.addToAdvice({
@@ -174,7 +174,7 @@ export async function createFixtureTests(
         t.addToAdvice({
           type: 'log',
           category: 'info',
-          text: 'Fixture files',
+          message: 'Fixture files',
         });
 
         t.addToAdvice({

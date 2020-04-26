@@ -20,8 +20,6 @@ export const DEFAULT_CLIENT_FLAGS: ClientFlags = {
 };
 
 export const DEFAULT_CLIENT_REQUEST_FLAGS: ClientRequestFlags = {
-  ...DEFAULT_PRINTER_FLAGS,
-  showAllDiagnostics: false,
   collectMarkers: false,
   timing: false,
   benchmark: false,
@@ -31,6 +29,7 @@ export const DEFAULT_CLIENT_REQUEST_FLAGS: ClientRequestFlags = {
   resolverPlatform: undefined,
   resolverScale: undefined,
   resolverMocks: false,
+  ...DEFAULT_PRINTER_FLAGS,
 };
 
 export type ClientRequestFlags = DiagnosticsPrinterFlags & {

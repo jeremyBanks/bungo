@@ -46,7 +46,10 @@ export function percentInsideCoverageFolder(
 
   const folders = [folder];
   while (folders.length > 0) {
-    const folder = folders.shift()!;
+    const folder = folders.shift();
+    if (folder === undefined) {
+      throw new Error('folders.length has already been validated');
+    }
 
     for (const file of folder.files.values()) {
       totalFiles++;

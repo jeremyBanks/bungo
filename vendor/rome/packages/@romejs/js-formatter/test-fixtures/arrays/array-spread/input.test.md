@@ -4,14 +4,14 @@
 
 ## `arrays > array-spread`
 
-### `Input`
+### `Javascript Input`
 
 ```javascript
 let a = [...a, ...b,];
 let b = [...a, ...b];
 ```
 
-### `Output`
+### `Javascript Output`
 
 ```javascript
 let a = [...a, ...b];

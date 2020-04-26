@@ -35,7 +35,11 @@ class FilePathMap<FilePath extends UnknownFilePath, Value> {
 
   *[Symbol.iterator](): Iterator<[FilePath, Value]> {
     for (const [joined, value] of this.joinedToValue) {
-      const path = this.joinedToPath.get(joined)!;
+      const path = this.joinedToPath.get(joined);
+      if (path === undefined) {
+        throw new Error('Impossible');
+      }
+
       yield [path, value];
     }
   }

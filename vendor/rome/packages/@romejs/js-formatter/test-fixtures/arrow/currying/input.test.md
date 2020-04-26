@@ -4,7 +4,7 @@
 
 ## `arrow > currying`
 
-### `Input`
+### `Javascript Input`
 
 ```javascript
 const fn = b => c => d => {
@@ -26,7 +26,7 @@ const middleware = options => (req, res, next) => {
 };
 ```
 
-### `Output`
+### `Javascript Output`
 
 ```javascript
 const fn = (b) => (c) => (d) => {

@@ -35,7 +35,6 @@ import {
   AnyTargetBindingPattern,
   AnyTypeArguments,
   ArrayExpression,
-  ArrayHole,
   ArrowFunctionExpression,
   AssignmentIdentifier,
   AssignmentOperator,
@@ -1299,7 +1298,7 @@ export function parseCallExpressionArguments(
       possibleAsyncArrow ? createIndexTracker() : undefined,
       possibleAsyncArrow ? refTrailingCommaPos : undefined,
     );
-    if (elt.type === 'ArrayHole') {
+    if (elt === undefined) {
       throw new Error('Expected element');
     }
 
@@ -2956,7 +2955,7 @@ export function parseArrowExpression(
   start: Position,
   opts: {
     bindingList?: Array<AnyBindingPattern>;
-    assignmentList?: Array<ArrayHole | ToReferencedItem>;
+    assignmentList?: Array<undefined | ToReferencedItem>;
     rest?: AnyTargetBindingPattern;
   },
   isAsync: boolean = false,
@@ -3355,17 +3354,20 @@ export function parseExpressionListNonEmpty(
 export function parseCallArgument(
   parser: JSParser,
   context: ExpressionContext,
-  allowHoles: boolean = false,
+  maybeAllowEmpty?: boolean,
   refShorthandDefaultPos?: IndexTracker,
   refNeedsArrowPos?: IndexTracker,
   refTrailingCommaPos?: IndexTracker,
-): ArrayHole | AnyExpression | SpreadElement | AmbiguousFlowTypeCastExpression {
-  if (allowHoles && parser.match(tt.comma)) {
-    return parseArrayHole(parser);
+): undefined | AnyExpression | SpreadElement | AmbiguousFlowTypeCastExpression {
+  const allowEmpty = Boolean(maybeAllowEmpty);
+
+  let elt: undefined | ReturnType<typeof parseParenItem>;
+  if (allowEmpty && parser.match(tt.comma)) {
+    elt = undefined;
   } else if (parser.match(tt.ellipsis)) {
     const spreadNodeStart = parser.state.startPos;
 
-    const elt = parseParenItem(
+    elt = parseParenItem(
       parser,
       parseSpread(parser, refShorthandDefaultPos, refNeedsArrowPos),
       spreadNodeStart,
@@ -3374,10 +3376,8 @@ export function parseCallArgument(
     if (refTrailingCommaPos && parser.match(tt.comma)) {
       refTrailingCommaPos.index = parser.state.startPos.index;
     }
-
-    return elt;
   } else {
-    return parseMaybeAssign<ReturnType<typeof parseParenItem>>(
+    elt = parseMaybeAssign<ReturnType<typeof parseParenItem>>(
       parser,
       context,
       false,
@@ -3386,6 +3386,8 @@ export function parseCallArgument(
       refNeedsArrowPos,
     );
   }
+
+  return elt;
 }
 
 // Parse the next token as an identifier. If `liberal` is true (used
@@ -3796,7 +3798,7 @@ function parseImportCall(parser: JSParser): ImportCall {
     );
   } else {
     const callArg = parseCallArgument(parser, 'call expression argument', false);
-    if (callArg.type === 'ArrayHole') {
+    if (callArg === undefined) {
       throw new Error(
         'Expected argument, parseExpressionListItem was passed maybeAllowEmpty: false',
       );
@@ -3894,15 +3896,6 @@ function parseDoExpression(parser: JSParser): DoExpression {
     {
       type: 'DoExpression',
       body,
-    },
-  );
-}
-
-export function parseArrayHole(parser: JSParser): ArrayHole {
-  return parser.finishNode(
-    parser.getPosition(),
-    {
-      type: 'ArrayHole',
     },
   );
 }

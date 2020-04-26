@@ -43,7 +43,7 @@ export default createMasterCommand({
         {
           type: 'log',
           category: 'info',
-          text: 'Searched for files with <emphasis>.test.*</emphasis> file extension',
+          message: 'Searched for files with <emphasis>.test.*</emphasis> file extension',
         },
       ],
       extensions: JS_EXTENSIONS,

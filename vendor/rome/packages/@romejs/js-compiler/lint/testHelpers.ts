@@ -38,7 +38,7 @@ export async function testLint(
   t.addToAdvice({
     type: 'log',
     category: 'info',
-    text: 'Lint options',
+    message: 'Lint options',
   });
 
   t.addToAdvice({
@@ -53,7 +53,7 @@ export async function testLint(
   t.addToAdvice({
     type: 'log',
     category: 'info',
-    text: 'Input',
+    message: 'Input',
   });
 
   t.addToAdvice({

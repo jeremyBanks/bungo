@@ -351,7 +351,7 @@ export default class Consumer {
         advice.push({
           type: 'log',
           category: 'warn',
-          text: 'Our internal value has been modified since we read the original source',
+          message: 'Our internal value has been modified since we read the original source',
         });
       }
     } else {
@@ -377,7 +377,7 @@ export default class Consumer {
         advice.push({
           type: 'log',
           category: 'warn',
-          text: `This value was expected to be found at <emphasis>${this.getKeyPathString()}</emphasis> but was not in the original source`,
+          message: `This value was expected to be found at <emphasis>${this.getKeyPathString()}</emphasis> but was not in the original source`,
         });
       }
     }
@@ -549,12 +549,7 @@ export default class Consumer {
       return;
     }
 
-    let knownProperties = Array.from(this.usedNames.keys());
-
-    const {normalizeKey} = this.context;
-    if (normalizeKey !== undefined) {
-      knownProperties = knownProperties.map((key) => normalizeKey(key));
-    }
+    const knownProperties = Array.from(this.usedNames.keys());
 
     for (const [key, value] of this.asMap(false, false)) {
       if (!this.usedNames.has(key)) {
@@ -768,7 +763,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'date',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asDate(def);
   }
@@ -800,7 +795,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'boolean',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asBoolean(def);
   }
@@ -816,27 +811,24 @@ export default class Consumer {
 
   // STRINGS
   asStringOrVoid(def?: string): undefined | string {
-    if (this.exists()) {
-      return this.asString(def);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
-    }
-  }
-
-  _declareOptionalString(def?: string) {
     this.declareDefinition({
       type: 'string',
       default: def,
       required: false,
     });
+
+    if (this.exists()) {
+      return this._asString(def);
+    } else {
+      return undefined;
+    }
   }
 
   asString(def?: string): string {
     this.declareDefinition({
       type: 'string',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asString(def);
   }
@@ -903,7 +895,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'bigint',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asBigInt(def);
   }
@@ -924,8 +916,8 @@ export default class Consumer {
   }
 
   // PATHS
-  asURLFilePath(def?: string): URLFilePath {
-    const path = this.asUnknownFilePath(def);
+  asURLFilePath(): URLFilePath {
+    const path = this.asUnknownFilePath();
     if (path.isURL()) {
       return path.assertURL();
     } else {
@@ -934,54 +926,22 @@ export default class Consumer {
     }
   }
 
-  asURLFilePathOrVoid(def?: string): undefined | URLFilePath {
-    if (this.exists()) {
-      return this.asURLFilePath(def);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
-    }
+  asUnknownFilePath(): UnknownFilePath {
+    return createUnknownFilePath(this.asString());
   }
 
-  asUnknownFilePath(def?: string): UnknownFilePath {
-    return createUnknownFilePath(this.asString(def));
-  }
-
-  asUnknownFilePathOrVoid(def?: string): undefined | UnknownFilePath {
-    if (this.exists()) {
-      return this.asUnknownFilePath(def);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
-    }
-  }
-
-  asAbsoluteFilePath(def?: string, cwd?: AbsoluteFilePath): AbsoluteFilePath {
-    const path = this.asUnknownFilePath(def);
+  asAbsoluteFilePath(): AbsoluteFilePath {
+    const path = this.asUnknownFilePath();
     if (path.isAbsolute()) {
       return path.assertAbsolute();
-    } else if (cwd !== undefined && path.isRelative()) {
-      return cwd.resolve(path);
     } else {
       this.unexpected(descriptions.CONSUME.EXPECTED_ABSOLUTE_PATH);
       return createAbsoluteFilePath('/').append(path);
     }
   }
 
-  asAbsoluteFilePathOrVoid(
-    def?: string,
-    cwd?: AbsoluteFilePath,
-  ): undefined | AbsoluteFilePath {
-    if (this.exists()) {
-      return this.asAbsoluteFilePath(def, cwd);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
-    }
-  }
-
-  asRelativeFilePath(def?: string): RelativeFilePath {
-    const path = this.asUnknownFilePath(def);
+  asRelativeFilePath(): RelativeFilePath {
+    const path = this.asUnknownFilePath();
     if (path.isRelative()) {
       return path.assertRelative();
     } else {
@@ -990,32 +950,14 @@ export default class Consumer {
     }
   }
 
-  asRelativeFilePathOrVoid(def?: string): undefined | RelativeFilePath {
-    if (this.exists()) {
-      return this.asRelativeFilePath(def);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
-    }
-  }
-
-  asExplicitRelativeFilePath(def?: string): RelativeFilePath {
-    const path = this.asRelativeFilePath(def);
+  asExplicitRelativeFilePath(): RelativeFilePath {
+    const path = this.asRelativeFilePath();
 
     if (path.isExplicitRelative()) {
       return path;
     } else {
       this.unexpected(descriptions.CONSUME.EXPECTED_EXPLICIT_RELATIVE_PATH);
       return path.toExplicitRelative();
-    }
-  }
-
-  asExplicitRelativeFilePathOrVoid(def?: string): undefined | RelativeFilePath {
-    if (this.exists()) {
-      return this.asExplicitRelativeFilePath(def);
-    } else {
-      this._declareOptionalString(def);
-      return undefined;
     }
   }
 
@@ -1046,7 +988,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'number',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asNumberFromString(def);
   }
@@ -1084,7 +1026,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'number',
       default: def,
-      required: def === undefined,
+      required: true,
     });
     return this._asNumber(def);
   }
@@ -1126,6 +1068,7 @@ export default class Consumer {
     this.declareDefinition({
       type: 'number-range',
       default: opts.default,
+      required: true,
       // @ts-ignore
       min,
       max,

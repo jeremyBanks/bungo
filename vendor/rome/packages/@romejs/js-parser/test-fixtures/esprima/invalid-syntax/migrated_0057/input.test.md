@@ -85,7 +85,7 @@ Program {
         advice: Array [
           log {
             category: 'info'
-            text: 'We expected to find the closing character <emphasis>]</emphasis> here'
+            message: 'We expected to find the closing character <emphasis>]</emphasis> here'
           }
           frame {
             location: Object {

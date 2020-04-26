@@ -124,7 +124,7 @@ function buildJSXOpeningAdvice(
     {
       type: 'log',
       category: 'info',
-      text: name === ''
+      message: name === ''
         ? 'Originated from this opening tag'
         : `Originated from opening tag of <emphasis>${name}</emphasis>`,
     },
@@ -144,7 +144,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`Use <emphasis>${toKebabCase(flag)}</emphasis> instead`,
+          message: markup`Use <emphasis>${toKebabCase(flag)}</emphasis> instead`,
         },
       ],
     }),
@@ -154,7 +154,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: message,
+          message,
         },
       ],
     }),
@@ -300,7 +300,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Previously imported here',
+          message: 'Previously imported here',
         },
         {
           type: 'frame',
@@ -347,7 +347,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`Instead of <emphasis>${word}</emphasis> use <emphasis>${suggestion}</emphasis>`,
+          message: markup`Instead of <emphasis>${word}</emphasis> use <emphasis>${suggestion}</emphasis>`,
         },
       ],
     }),
@@ -358,7 +358,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: '== is only allowed when comparing against null',
+          message: '== is only allowed when comparing against null',
         },
       ],
     },
@@ -369,7 +369,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: '!= is only allowed when comparing against null',
+          message: '!= is only allowed when comparing against null',
         },
       ],
     },
@@ -412,7 +412,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: "Consider renaming this variable. It's easy to confuse the origin of variables when they're named after a known global.",
+          message: "Consider renaming this variable. It's easy to confuse the origin of variables when they're named after a known global.",
         },
       ],
     }),
@@ -423,7 +423,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `It's hard to visually count the amount of spaces, it's clearer if you use a quantifier instead. eg / {${String(
+          message: `It's hard to visually count the amount of spaces, it's clearer if you use a quantifier instead. eg / {${String(
             count,
           )}}/`,
         },
@@ -540,7 +540,7 @@ export const descriptions = createMessages({
           {
             type: 'log',
             category: 'info',
-            text: adviceMessage,
+            message: adviceMessage,
           },
         ],
       };
@@ -567,7 +567,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: 'Version control root was set to the project root as it was not configured. To configure a different folder run',
+              message: 'Version control root was set to the project root as it was not configured. To configure a different folder run',
             },
             {
               type: 'command',
@@ -578,7 +578,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: 'Version control root was set here',
+              message: 'Version control root was set here',
             },
             {
               type: 'frame',
@@ -593,7 +593,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`Defined already by <filelink target="${existing}" />`,
+          message: markup`Defined already by <filelink target="${existing}" />`,
         },
       ],
     }),
@@ -604,7 +604,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`Defined already by <filelink emphasis target="${existing}" />`,
+          message: markup`Defined already by <filelink emphasis target="${existing}" />`,
         },
       ],
     }),
@@ -615,7 +615,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Run <command>rome init</command> in this folder to initialize a project',
+          message: 'Run <command>rome init</command> in this folder to initialize a project',
         },
       ],
     },
@@ -668,7 +668,7 @@ export const descriptions = createMessages({
     UNCLOSED_TAG: (tagName: string, openLocation: DiagnosticLocation) => ({
       message: markup`Unclosed ${tagName} tag`,
       advice: [
-        {type: 'log', category: 'info', text: 'Tag started here'},
+        {type: 'log', category: 'info', message: 'Tag started here'},
         {
           type: 'frame',
           location: openLocation,
@@ -696,18 +696,6 @@ export const descriptions = createMessages({
       message: 'No tests declared in this file',
       category: 'tests/noneDeclared',
     },
-    LOGS: (advice: DiagnosticAdvice) => ({
-      message: 'Test file produced console logs',
-      category: 'tests/logs',
-      advice: [
-        ...advice,
-        {
-          type: 'log',
-          category: 'info',
-          text: 'Only visible when this test file contains failures',
-        },
-      ],
-    }),
   },
   SUPPRESSIONS: {
     UNUSED: {
@@ -725,7 +713,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `Did you mean <emphasis>${suggestion}</emphasis>?`,
+          message: `Did you mean <emphasis>${suggestion}</emphasis>?`,
         },
       ],
     }),
@@ -789,12 +777,12 @@ export const descriptions = createMessages({
           {
             type: 'log',
             category: 'info',
-            text: 'This is because the module it belongs to wont be executed yet. This is due to a circular dependency creating a module cycle.',
+            message: 'This is because the module it belongs to wont be executed yet. This is due to a circular dependency creating a module cycle.',
           },
           {
             type: 'log',
             category: 'info',
-            text: `The likely cause is the file ${formatPart(culprit)} that was required by ${formatPart(
+            message: `The likely cause is the file ${formatPart(culprit)} that was required by ${formatPart(
               target,
             )} which created a circular dependency:`,
           },
@@ -853,7 +841,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `Export was defined here in <filelink emphasis target="${exportLoc.filename}" />`,
+          message: `Export was defined here in <filelink emphasis target="${exportLoc.filename}" />`,
         },
         {
           type: 'frame',
@@ -879,7 +867,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: "This file doesn't have any exports",
+              message: "This file doesn't have any exports",
             },
           ]
         : buildSuggestionAdvice(
@@ -917,7 +905,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`However we found a matching local variable in <filelink emphasis target="${location.filename}" />. Did you forget to export it?`,
+          message: markup`However we found a matching local variable in <filelink emphasis target="${location.filename}" />. Did you forget to export it?`,
         },
         {
           type: 'frame',
@@ -937,7 +925,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `Did you mean <emphasis>${possibleCorrectLicense}</emphasis>?`,
+          message: `Did you mean <emphasis>${possibleCorrectLicense}</emphasis>?`,
         },
       ],
     }),
@@ -1123,12 +1111,12 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Change the extension to <emphasis>.mjs</emphasis> to turn this file into a module',
+          message: 'Change the extension to <emphasis>.mjs</emphasis> to turn this file into a module',
         },
         {
           type: 'log',
           category: 'info',
-          text: `Add <emphasis>"type": "module"</emphasis> to your <filelink emphasis target="${manifestPath}" />`,
+          message: `Add <emphasis>"type": "module"</emphasis> to your <filelink emphasis target="${manifestPath}" />`,
         },
       ],
     }),
@@ -1138,7 +1126,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: "Maybe a typo in the method name ('constructor') or not extending another class?",
+          message: "Maybe a typo in the method name ('constructor') or not extending another class?",
         },
       ],
     },
@@ -1148,17 +1136,17 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Are you using <emphasis>TypeScript</emphasis>? Change the file extension to <emphasis>.tsx</emphasis>',
+          message: 'Are you using <emphasis>TypeScript</emphasis>? Change the file extension to <emphasis>.tsx</emphasis>',
         },
         {
           type: 'log',
           category: 'info',
-          text: 'Are you using <emphasis>Flow</emphasis>? Add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
+          message: 'Are you using <emphasis>Flow</emphasis>? Add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
         },
         {
           type: 'log',
           category: 'info',
-          text: 'Not using either? Change the file extension to <emphasis>.jsx</emphasis>',
+          message: 'Not using either? Change the file extension to <emphasis>.jsx</emphasis>',
         },
         // TODO you can also add `@jsx whatever` at the top of a file
       ],
@@ -1169,7 +1157,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Change the file extension to <emphasis>.tsx</emphasis> to enable JSX support',
+          message: 'Change the file extension to <emphasis>.tsx</emphasis> to enable JSX support',
         },
       ],
     },
@@ -1180,7 +1168,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: 'Did you use `({a}) = 0` instead of `({a} = 0)`?',
+              message: 'Did you use `({a}) = 0` instead of `({a} = 0)`?',
             },
           ]
         : patternType === 'array'
@@ -1188,7 +1176,7 @@ export const descriptions = createMessages({
                 {
                   type: 'log',
                   category: 'info',
-                  text: 'Did you use `([a]) = 0` instead of `([a] = 0)`?',
+                  message: 'Did you use `([a]) = 0` instead of `([a] = 0)`?',
                 },
               ]
             : [],
@@ -1233,7 +1221,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'To enable <emphasis>Flow</emphasis> support, add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
+          message: 'To enable <emphasis>Flow</emphasis> support, add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
         },
       ],
     }),
@@ -1243,7 +1231,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'To enable <emphasis>TypeScript</emphasis> support, the file extension should end in <emphasis>.ts</emphasis> or <emphasis>.tsx</emphasis>',
+          message: 'To enable <emphasis>TypeScript</emphasis> support, the file extension should end in <emphasis>.ts</emphasis> or <emphasis>.tsx</emphasis>',
         },
       ],
     }),
@@ -1253,12 +1241,12 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Did you mean <emphasis>TypeScript</emphasis>? Change the file extension to <emphasis>.ts</emphasis> or <emphasis>.tsx</emphasis>',
+          message: 'Did you mean <emphasis>TypeScript</emphasis>? Change the file extension to <emphasis>.ts</emphasis> or <emphasis>.tsx</emphasis>',
         },
         {
           type: 'log',
           category: 'info',
-          text: 'Did you mean <emphasis>Flow</emphasis>? Add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
+          message: 'Did you mean <emphasis>Flow</emphasis>? Add a <emphasis>@flow</emphasis> comment annotation to the top of the file',
         },
       ],
     }),
@@ -1274,7 +1262,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Optional chain member responsible',
+          message: 'Optional chain member responsible',
         },
         {
           type: 'frame',
@@ -1310,7 +1298,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: `Did you accidently hold shift?`,
+              message: `Did you accidently hold shift?`,
             },
           ]
         : [],
@@ -1321,7 +1309,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `We expected to find the closing character <emphasis>${char}</emphasis> here`,
+          message: `We expected to find the closing character <emphasis>${char}</emphasis> here`,
         },
         {
           type: 'frame',
@@ -1345,7 +1333,7 @@ export const descriptions = createMessages({
             {
               type: 'log',
               category: 'info',
-              text: 'Did you want to write a hashbang? A hashbang can only be the first thing in a file.',
+              message: 'Did you want to write a hashbang? A hashbang can only be the first thing in a file.',
             },
           ]
         : [],
@@ -1361,7 +1349,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: markup`Did you mean '<emphasis>${equivalentChar}</emphasis>' (<emphasis>${equivalentName}</emphasis>)? Both characters look the same, but are not.`,
+          message: markup`Did you mean '<emphasis>${equivalentChar}</emphasis>' (<emphasis>${equivalentName}</emphasis>)? Both characters look the same, but are not.`,
         },
       ],
     }),
@@ -1388,13 +1376,13 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'error',
-          text: `This type is incompatible with expected type of`,
+          message: `This type is incompatible with expected type of`,
         },
         originLoc === undefined
           ? {
               type: 'log',
               category: 'info',
-              text: upper,
+              message: upper,
             }
           : {
               type: 'frame',
@@ -1466,7 +1454,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: 'Possible values are',
+          message: 'Possible values are',
         },
         {
           type: 'list',
@@ -1522,7 +1510,7 @@ export const descriptions = createMessages({
         {
           type: 'log',
           category: 'info',
-          text: `You likely wanted \`{"enabled": ${String(enabled)}}\` instead`,
+          message: `You likely wanted \`{"enabled": ${String(enabled)}}\` instead`,
         },
       ],
     }),

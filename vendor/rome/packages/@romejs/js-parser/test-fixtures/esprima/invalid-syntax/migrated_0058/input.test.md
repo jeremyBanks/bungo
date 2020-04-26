@@ -82,21 +82,7 @@ Program {
           }
         }
         elements: Array [
-          ArrayHole {
-            loc: Object {
-              filename: 'input.js'
-              end: Object {
-                column: 1
-                index: 1
-                line: 1
-              }
-              start: Object {
-                column: 1
-                index: 1
-                line: 1
-              }
-            }
-          }
+          undefined
           ReferenceIdentifier {
             name: 'INVALID_PLACEHOLDER'
             loc: Object {

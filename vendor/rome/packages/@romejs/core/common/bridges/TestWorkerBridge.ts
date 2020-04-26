@@ -40,17 +40,6 @@ export default class TestWorkerBridge extends Bridge {
     direction: 'server->client',
   });
 
-  snapshotUpdated = this.createEvent<
-    {
-      filename: string;
-      event: 'delete' | 'update' | 'create';
-    },
-    void
-  >({
-    name: 'snapshotUpdated',
-    direction: 'server<-client',
-  });
-
   runTest = this.createEvent<number, void>({
     name: 'runTest',
     direction: 'server->client',

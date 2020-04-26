@@ -4,7 +4,7 @@
 
 ## `arrow > params`
 
-### `Input`
+### `Javascript Input`
 
 ```javascript
 fooooooooooooooooooooooooooooooooooooooooooooooooooo(action => next =>
@@ -330,7 +330,7 @@ foo(
 );
 ```
 
-### `Output`
+### `Javascript Output`
 
 ```javascript
 fooooooooooooooooooooooooooooooooooooooooooooooooooo((action) => (next) => dispatch(action));

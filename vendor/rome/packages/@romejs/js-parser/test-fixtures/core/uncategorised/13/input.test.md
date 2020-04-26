@@ -124,21 +124,7 @@ Program {
                 }
               }
             }
-            ArrayHole {
-              loc: Object {
-                filename: 'input.js'
-                end: Object {
-                  column: 11
-                  index: 11
-                  line: 1
-                }
-                start: Object {
-                  column: 11
-                  index: 11
-                  line: 1
-                }
-              }
-            }
+            undefined
             NumericLiteral {
               value: 3
               format: undefined

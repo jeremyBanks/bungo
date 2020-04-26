@@ -55,7 +55,7 @@ Program {
         advice: Array [
           log {
             category: 'info'
-            text: 'Originated from this opening tag'
+            message: 'Originated from this opening tag'
           }
           frame {
             location: Object {

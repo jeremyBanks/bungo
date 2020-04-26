@@ -69,7 +69,7 @@ Program {
         advice: Array [
           log {
             category: 'info'
-            text: 'Defined already here'
+            message: 'Defined already here'
           }
           frame {
             location: Object {

@@ -113,7 +113,7 @@ export default class Reporter {
     this.enabled = opts.disabled === true ? 0 : 1;
     this.markupOptions =
       opts.markupOptions === undefined ? {} : opts.markupOptions;
-    this.streamHasSpacer = new Set();
+    this.hasSpacer = false;
     this.shouldRedirectOutToErr = false;
     this.stdin = opts.stdin;
 
@@ -185,7 +185,7 @@ export default class Reporter {
     // Watch for resizing
     if (outStream.format === 'ansi' && stdout !== undefined) {
       const onStdoutResize = () => {
-        if (stdout?.columns !== undefined) {
+        if (stdout !== undefined && stdout.columns !== undefined) {
           const {columns} = stdout;
           columnsUpdated.send(columns);
           this.setStreamColumns([outStream, errStream], columns);
@@ -254,7 +254,7 @@ export default class Reporter {
   isRemote: boolean;
   noProgress: boolean;
   isVerbose: boolean;
-  streamHasSpacer: Set<ReporterStream>;
+  hasSpacer: boolean;
   indentLevel: number;
   indentString: string;
   enabled: number;
@@ -351,13 +351,14 @@ export default class Reporter {
       msg = indentString + msg.replace(/\n([^\n])/g, `\n${indentString}$1`);
     }
 
+    // Track if there's going to be a completely empty line
+    this.hasSpacer = msg === '' || msg[msg.length - 1] === '\n';
+
     return msg;
   }
 
-  redirectOutToErr(should: boolean): boolean {
-    const old = this.shouldRedirectOutToErr;
+  redirectOutToErr(should: boolean) {
     this.shouldRedirectOutToErr = should;
-    return old;
   }
 
   setStreamColumns(streams: Array<ReporterStream>, columns: number) {
@@ -766,28 +767,28 @@ export default class Reporter {
 
   //# SECTIONS
   heading(text: string) {
-    this.br();
+    this.spacer();
     this.logAll(
       `<inverse><emphasis>${text}</emphasis></inverse>`,
       {
         nonTTY: `# ${text}`,
       },
     );
-    this.br();
+    this.spacer();
   }
 
   section(title: undefined | string, callback: () => void) {
     this.hr(title === undefined ? undefined : `<emphasis>${title}</emphasis>`);
     this.indent(() => {
       callback();
-      this.br();
+      this.spacer();
     });
   }
 
   hr(text?: string) {
     const {hasClearScreen} = this;
 
-    this.br();
+    this.spacer();
 
     if (hasClearScreen && text === undefined) {
       return;
@@ -804,7 +805,7 @@ export default class Reporter {
       this.logOneNoMarkup(stream, prefix + '\u2501'.repeat(barLength));
     }
 
-    this.br();
+    this.spacer();
   }
 
   async steps(
@@ -849,12 +850,14 @@ export default class Reporter {
     this.logAll(`<dim>[${current}/${total}]</dim> ${msg}`);
   }
 
-  br(force: boolean = false) {
-    for (const stream of this.getStreams(false)) {
-      if (!this.streamHasSpacer.has(stream) || force) {
-        this.logOne(stream, '');
-      }
+  spacer() {
+    if (!this.hasSpacer) {
+      this.forceSpacer();
     }
+  }
+
+  forceSpacer() {
+    this.logAll('');
   }
 
   wrapCallback: WrapperFactory = (callback) => {
@@ -925,15 +928,6 @@ export default class Reporter {
     if (opts.newline !== false) {
       msg += '\n';
     }
-
-    // Track if there's going to be a completely empty line
-    const hasSpacer = msg === '\n' || msg.endsWith('\n\n');
-    if (hasSpacer) {
-      this.streamHasSpacer.add(stream);
-    } else {
-      this.streamHasSpacer.delete(stream);
-    }
-
     this.writeSpecific(stream, msg, opts);
   }
 

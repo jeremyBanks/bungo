@@ -5,7 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {DiagnosticAdvice, getErrorStackAdvice} from '@romejs/diagnostics';
+import {
+  DiagnosticAdvice,
+  DiagnosticAdviceItem,
+  getErrorStackAdvice,
+} from '@romejs/diagnostics';
 import SnapshotManager from './SnapshotManager';
 import {TestRunnerOptions} from '../master/testing/types';
 import {Event} from '@romejs/events';
@@ -18,10 +22,10 @@ import {
   AsyncFunc,
   ExpectedError,
   SyncThrower,
-  TestDiagnosticAdviceItem,
   TestHelper,
-  TestSnapshotOptions,
 } from '@romejs-runtime/rome/test';
+import {createAbsoluteFilePath} from '@romejs/path';
+
 function formatExpectedError(expected: ExpectedError): string {
   if (typeof expected === 'string') {
     return JSON.stringify(expected);
@@ -64,7 +68,7 @@ type SnapshotOptions = {
   entryName: string;
   expected: unknown;
   message?: string;
-  opts?: TestSnapshotOptions;
+  optionalFilename?: string;
 };
 
 export default class TestAPI implements TestHelper {
@@ -154,7 +158,7 @@ export default class TestAPI implements TestHelper {
       advice.push({
         type: 'log',
         category: 'info',
-        text: `Both the received and expected values are visually identical`,
+        message: `Both the received and expected values are visually identical`,
       });
 
       advice.push({
@@ -166,14 +170,14 @@ export default class TestAPI implements TestHelper {
         advice.push({
           type: 'log',
           category: 'info',
-          text: `Try using t.${visualMethod} if you wanted a visual match`,
+          message: `Try using t.${visualMethod} if you wanted a visual match`,
         });
       }
     } else {
       advice.push({
         type: 'log',
         category: 'info',
-        text: `Expected to receive`,
+        message: `Expected to receive`,
       });
 
       advice.push({
@@ -184,7 +188,7 @@ export default class TestAPI implements TestHelper {
       advice.push({
         type: 'log',
         category: 'info',
-        text: `But got`,
+        message: `But got`,
       });
 
       advice.push({
@@ -195,7 +199,7 @@ export default class TestAPI implements TestHelper {
       advice.push({
         type: 'log',
         category: 'info',
-        text: 'Diff',
+        message: 'Diff',
       });
 
       advice.push({
@@ -211,7 +215,7 @@ export default class TestAPI implements TestHelper {
     return advice;
   }
 
-  addToAdvice(item: TestDiagnosticAdviceItem): void {
+  addToAdvice(item: DiagnosticAdviceItem): void {
     this.advice.push(item);
   }
 
@@ -290,7 +294,7 @@ export default class TestAPI implements TestHelper {
           {
             type: 'log',
             category: 'info',
-            text: `Received`,
+            message: `Received`,
           },
           {
             type: 'code',
@@ -310,7 +314,7 @@ export default class TestAPI implements TestHelper {
           {
             type: 'log',
             category: 'info',
-            text: `Received`,
+            message: `Received`,
           },
           {
             type: 'code',
@@ -330,7 +334,7 @@ export default class TestAPI implements TestHelper {
           {
             type: 'log',
             category: 'info',
-            text: `Received`,
+            message: `Received`,
           },
           {
             type: 'code',
@@ -350,7 +354,7 @@ export default class TestAPI implements TestHelper {
           {
             type: 'log',
             category: 'info',
-            text: `Received`,
+            message: `Received`,
           },
           {
             type: 'code',
@@ -485,14 +489,14 @@ export default class TestAPI implements TestHelper {
   snapshot(
     expected: unknown,
     message?: string,
-    opts?: TestSnapshotOptions,
+    optionalFilename?: string,
   ): Promise<string> {
     const id = this.snapshotCounter++;
     return this.catchNamedSnapshot({
       entryName: String(id),
       expected,
       message,
-      opts,
+      optionalFilename,
     });
   }
 
@@ -500,14 +504,34 @@ export default class TestAPI implements TestHelper {
     entryName: string,
     expected: unknown,
     message?: string,
-    opts?: TestSnapshotOptions,
+    optionalFilename?: string,
   ): Promise<string> {
     return this.catchNamedSnapshot({
       entryName,
       expected,
       message,
-      opts,
+      optionalFilename,
     });
+  }
+
+  async getSnapshot(entryName: string): Promise<unknown> {
+    // TODO add `filename`
+    return this.snapshotManager.get(this.testName, entryName);
+  }
+
+  _normalizeSnapshotFilename(filename: string): string {
+    if (!filename.endsWith('test.md')) {
+      const lastIndex = filename.lastIndexOf('.');
+      let baseName = undefined;
+      if (lastIndex === -1) {
+        // extensionless file
+        baseName = filename;
+      } else {
+        baseName = filename.substring(0, lastIndex);
+      }
+      return `${baseName}.test.md`;
+    }
+    return filename;
   }
 
   catchNamedSnapshot(opts: SnapshotOptions): Promise<string> {
@@ -522,10 +546,10 @@ export default class TestAPI implements TestHelper {
       entryName,
       message,
       expected,
-      opts = {},
+      optionalFilename,
     }: SnapshotOptions,
   ): Promise<string> {
-    let language: undefined | string = opts.language;
+    let language: undefined | string;
 
     let formatted = '';
     if (typeof expected === 'string') {
@@ -535,11 +559,21 @@ export default class TestAPI implements TestHelper {
       formatted = prettyFormat(expected);
     }
 
+    if (entryName.toLocaleLowerCase().includes('javascript')) {
+      language = 'javascript';
+    }
+
+    let snapshotPath = undefined;
+    if (optionalFilename !== undefined) {
+      optionalFilename = this._normalizeSnapshotFilename(optionalFilename);
+      snapshotPath = createAbsoluteFilePath(optionalFilename);
+    }
+
     // Get the current snapshot
     const existingSnapshot = await this.snapshotManager.get(
       this.testName,
       entryName,
-      opts.filename,
+      snapshotPath,
     );
     if (existingSnapshot === undefined) {
       // No snapshot exists, let's save this one!
@@ -548,7 +582,7 @@ export default class TestAPI implements TestHelper {
         entryName,
         value: formatted,
         language,
-        optionalFilename: opts.filename,
+        snapshotPath,
       });
       return entryName;
     }
@@ -570,14 +604,14 @@ export default class TestAPI implements TestHelper {
         advice.push({
           type: 'log',
           category: 'info',
-          text: markup`Snapshot can be found at <filelink emphasis target="${this.snapshotManager.defaultSnapshotPath.join()}" />`,
+          message: markup`Snapshot can be found at <filelink emphasis target="${this.snapshotManager.defaultSnapshotPath.join()}" />`,
         });
       }
 
       advice.push({
         type: 'log',
         category: 'info',
-        text: markup`Run <command>rome test <filelink target="${this.file.uid}" /> --update-snapshots</command> to update this snapshot`,
+        message: markup`Run <command>rome test <filelink target="${this.file.uid}" /> --update-snapshots</command> to update this snapshot`,
       });
 
       // Ignore the original t.snapshot call and caughtNamedSnapshot

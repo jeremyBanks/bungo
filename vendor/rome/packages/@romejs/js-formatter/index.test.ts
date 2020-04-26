@@ -57,7 +57,7 @@ const promise = createFixtureTests(async (fixture, t) => {
   t.addToAdvice({
     type: 'log',
     category: 'info',
-    text: 'Fomat options',
+    message: 'Fomat options',
   });
 
   t.addToAdvice({
@@ -69,28 +69,17 @@ const promise = createFixtureTests(async (fixture, t) => {
 
   const printed = formatJS(ast, formatOptions);
 
-  const snapshotFile = inputFile.absolute.getParent().append(
-    inputFile.absolute.getExtensionlessBasename(),
+  const outputFile = inputFile.absolute.getParent().append(
+    `${inputFile.absolute.getExtensionlessBasename()}.test.md`,
   ).join();
 
-  await t.snapshotNamed(
-    'Input',
-    inputContent,
-    undefined,
-    {
-      filename: snapshotFile,
-      language: 'javascript',
-    },
-  );
+  await t.snapshotNamed('Javascript Input', inputContent, undefined, outputFile);
 
   await t.snapshotNamed(
-    'Output',
+    'Javascript Output',
     printed.code,
     undefined,
-    {
-      filename: snapshotFile,
-      language: 'javascript',
-    },
+    outputFile,
   );
 });
 

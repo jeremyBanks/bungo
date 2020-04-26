@@ -90,36 +90,8 @@ Program {
             }
           }
           elements: Array [
-            ArrayHole {
-              loc: Object {
-                filename: 'input.js'
-                end: Object {
-                  column: 5
-                  index: 5
-                  line: 1
-                }
-                start: Object {
-                  column: 6
-                  index: 6
-                  line: 1
-                }
-              }
-            }
-            ArrayHole {
-              loc: Object {
-                filename: 'input.js'
-                end: Object {
-                  column: 7
-                  index: 7
-                  line: 1
-                }
-                start: Object {
-                  column: 7
-                  index: 7
-                  line: 1
-                }
-              }
-            }
+            undefined
+            undefined
             NumericLiteral {
               value: 42
               format: undefined

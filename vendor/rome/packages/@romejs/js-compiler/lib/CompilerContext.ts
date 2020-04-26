@@ -291,7 +291,7 @@ export default class CompilerContext {
     const target = nodes.target === undefined ? nodes.old : nodes.target;
 
     const {category} = description;
-    const advice = [...(description.advice || [])];
+    const advice = description.advice || [];
     const loc = this.getLoc(target);
     const oldCode =
       loc === undefined
@@ -308,7 +308,7 @@ export default class CompilerContext {
       advice.push({
         type: 'log',
         category: 'info',
-        text: 'Recommended fix',
+        message: 'Recommended fix',
       });
 
       advice.push({
@@ -319,7 +319,7 @@ export default class CompilerContext {
         advice.push({
           type: 'log',
           category: 'error',
-          text: 'Unable to find target location',
+          message: 'Unable to find target location',
         });
       } else {
         advice.push(
@@ -358,12 +358,10 @@ export default class CompilerContext {
       for (const suggestion of suggestions) {
         const num = index + 1;
 
-        const titlePrefix =
-          suggestions.length === 1 ? 'Suggested fix' : `Suggested fix #${num}`;
         advice.push({
           type: 'log',
           category: 'none',
-          text: `<emphasis>${titlePrefix}:</emphasis> ${suggestion.title}`,
+          message: `<emphasis>Suggested fix #${num}:</emphasis> ${suggestion.title}`,
         });
 
         advice.push({
@@ -377,21 +375,19 @@ export default class CompilerContext {
         advice.push({
           type: 'log',
           category: 'info',
-          text: suggestion.description,
+          message: suggestion.description,
         });
 
         if (loc === undefined) {
           advice.push({
             type: 'log',
             category: 'error',
-            text: 'Unable to find target location',
+            message: 'Unable to find target location',
           });
         } else {
           advice.push(
             buildLintDecisionAdviceAction({
-              noun: suggestions.length === 1
-                ? 'Apply suggested fix'
-                : `Apply suggested fix "${suggestion.title}"`,
+              noun: `Apply suggestion "${suggestion.title}"`,
               shortcut: String(num),
               instruction: 'To apply this fix run',
               filename: this.displayFilename,
