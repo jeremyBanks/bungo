@@ -1,11 +1,13 @@
 import { CWD_PATH } from "@romejs/path/index";
 import { parseCLIFlagsFromProcess } from "@romejs/cli-flags";
-import { createUnknownFilePath as createPath } from "@romejs/path/index";
+import {
+  createUnknownFilePath as createPath,
+  AbsoluteFilePath,
+} from "@romejs/path/index";
 
 import packageJson from "../package.json";
 
 import { ProjectGraph } from "./bungo/project-graph";
-import testCases from "./bungo/test-cases";
 
 export const main = async (): Promise<undefined | number | void> => {
   const parser = parseCLIFlagsFromProcess({
@@ -30,9 +32,33 @@ export const main = async (): Promise<undefined | number | void> => {
     return 1;
   }
 
+  const files: Record<string, string> = {};
+
+  const fs = require("fs");
+  const walkDir = (path: AbsoluteFilePath) => {
+    const contents = fs.readdirSync(path.toString(), {
+      withFileTypes: true,
+    });
+    for (const entry of contents) {
+      const entryPath = path.resolve("./" + entry.name);
+      if (entry.isDirectory()) {
+        walkDir(entryPath);
+      } else if (entry.isFile()) {
+        if (/\.(d\.ts|tsx?|jsx?|mjsx?)$/.test(entry.name)) {
+          files[entryPath.toString()] = fs.readFileSync(
+            entryPath.toString(),
+            "utf8"
+          );
+        }
+      }
+    }
+  };
+
+  walkDir(flags.rootPath);
+
   const project = ProjectGraph.fromData({
-    rootPath: createPath("/src/").assertAbsolute(),
-    files: Object.entries(testCases[0].original).map(([path, body]) => ({
+    rootPath: flags.rootPath,
+    files: Object.entries(files).map(([path, body]) => ({
       path: createPath(path).assertAbsolute(),
       body,
     })),
@@ -57,10 +83,17 @@ export const main = async (): Promise<undefined | number | void> => {
         ${[...project.fileNodes.values()]
           .map((file) =>
             file.parent
-              ? `"${
-                  file.parent.originalPath.getBasename().split(".")[0]
-                }" -> "${file.originalPath.getBasename().split(".")[0]}"`
-              : `"~/src" -> "${file.originalPath.getBasename().split(".")[0]}"`
+              ? `"${file.parent.originalPath
+                  .getBasename()
+                  .replace(
+                    /\.[^\.]+$/,
+                    ""
+                  )}" -> "${file.originalPath
+                  .getBasename()
+                  .replace(/\.[^\.]+$/, "")}"`
+              : `"~/src" -> "${file.originalPath
+                  .getBasename()
+                  .replace(/\.[^\.]+$/, "")}"`
           )
           .join("\n")}
       }

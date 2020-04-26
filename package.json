@@ -10,7 +10,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "bungo": "yarn build ; node --unhandled-rejections=strict ./.dist/index.js \"$@\" | tee ./.dist/index.txt",
+    "bungo": "yarn build ; node --unhandled-rejections=strict ./.dist/index.js --root src | tee ./.dist/index.txt",
     "test": "rome test src",
     "bb": "yarn prettier --write src/* src/**/* ; yarn bungo && dot .dist/index.txt -Tpng -o .dist/index.png",
     "sunrise": "git stash || true ; yarn update-rome ; yarn build-rome ; git add --force ./vendor/rome ./node_modules/rome ; git commit ./vendor/rome ./node_modules/rome -m '🌅 update Rome' ; yarn build ; yarn bungo",

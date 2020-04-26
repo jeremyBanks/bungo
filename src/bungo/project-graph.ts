@@ -52,16 +52,37 @@ export class ProjectGraph {
       );
 
       const dependencyPaths = new Set(
-        [...importedPaths].map((x) =>
-          file.originalPath.getParent().resolve(x).toString()
-        )
+        [...importedPaths]
+          .map((x) => file.originalPath.getParent().resolve(x).toString())
+          .filter((path) => path.startsWith(rootPath))
       );
 
       for (const path of dependencyPaths) {
-        const dependency = fileNodesByOriginalPath.get(path);
+        let dependency;
+        for (const potentialPath of [
+          path,
+          path + ".d.ts",
+          path + ".ts",
+          path + ".js",
+          path + ".tsx",
+          path + ".jsx",
+          path + "/index.d.ts",
+          path + "/index.ts",
+          path + "/index.js",
+          path + "/index.tsx",
+          path + "/index.jsx",
+        ]) {
+          dependency = fileNodesByOriginalPath.get(potentialPath);
+          if (dependency) {
+            break;
+          }
+        }
 
         if (!dependency) {
-          throw new Error(`could not find import ${path}`);
+          continue;
+          throw new Error(
+            `could not find import ${path} from ${file.originalPath.toString()}`
+          );
         }
 
         file.dependencies.add(dependency);

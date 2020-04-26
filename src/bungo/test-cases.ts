@@ -2,8 +2,8 @@ export default [
   {
     original: {
       "/src/main.ts": `
-          import "./cli.ts";
-          import "./business.ts";
+        import "./cli.ts";
+        import "./business.ts";
       `,
       "/src/cli.ts": `
         import "./string-utils.ts";
