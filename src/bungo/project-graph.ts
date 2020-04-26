@@ -6,8 +6,11 @@ import { ArrayElement } from "./useful-types";
 
 export class ProjectGraph {
   private constructor(
+    // project root path, imports outside of this will be ignored.
     readonly rootPath: AbsoluteFilePath,
+    // all files in the project
     readonly fileNodes: Set<FileNode>,
+    // all imports in the project
     readonly dependencyEdges: Set<DependencyEdge>
   ) {
     this.rootPath = rootPath;
@@ -40,30 +43,28 @@ export class ProjectGraph {
         (x) => x.type === "ImportDeclaration"
       ) as Array<ImportDeclaration>;
 
-      const importedPaths = new Set(imports.map((x) => x.source.value));
+      const importedPaths = new Set(
+        imports
+          .map((x) => x.source.value)
+          .filter((x) => x.startsWith("./") || x.startsWith("../"))
+      );
 
       const dependencyPaths = new Set(
-        [...importedPaths]
-          .filter((x) => x.startsWith("./") || x.startsWith("../"))
-          .map((x) => file.originalPath.getParent().resolve(x).toString())
+        [...importedPaths].map((x) =>
+          file.originalPath.getParent().resolve(x).toString()
+        )
       );
 
-      const dependencies = new Set(
-        [...dependencyPaths].map((path) => {
-          const file = fileNodesByOriginalPath.get(path);
+      for (const path of dependencyPaths) {
+        const dependency = fileNodesByOriginalPath.get(path);
 
-          if (!file) {
-            throw new Error(`could not import ${path}`);
-          }
+        if (!dependency) {
+          throw new Error(`could not import ${path}`);
+        }
 
-          return file;
-        })
-      );
-
-      for (const dependency of dependencies) {
         file.dependencies.add(dependency);
         dependency.dependents.add(file);
-        dependencyEdges.add(new DependencyEdge(dependency, file));
+        dependencyEdges.add(new DependencyEdge(dependency, file, path));
       }
     }
 
@@ -83,26 +84,39 @@ export class ProjectGraph {
 
 class FileNode {
   public constructor(
+    // original absolute path of this file
     readonly originalPath: AbsoluteFilePath,
+    // original source code body of this file
     readonly originalBody: string,
+    // dependencies that this file imports
     readonly dependencies: Set<FileNode> = new Set(),
+    // dependents that import this file
     readonly dependents: Set<FileNode> = new Set(),
-    public parent: FileNode | undefined = undefined
+    // parent of module, or undefined for root pseudo-parentt
+    public parent: FileNode | undefined = undefined,
+    // minimum number of edges between root (undefined pseudo-parent) and this node
+    public depth: number = Infinity
   ) {
     this.originalPath = originalPath;
     this.originalBody = originalBody;
     this.dependencies = dependencies;
     this.dependents = dependents;
     this.parent = parent;
+    this.depth = Infinity;
   }
 }
 
 class DependencyEdge {
   public constructor(
+    // the file being imported
     readonly dependencyHead: FileNode,
-    readonly dependentTail: FileNode
+    // the file doing the importing
+    readonly dependentTail: FileNode,
+    // the import path string literal that existed in the file, which we may replace.
+    readonly importLiteral: string
   ) {
     this.dependencyHead = dependencyHead;
     this.dependentTail = dependentTail;
+    this.importLiteral = importLiteral;
   }
 }

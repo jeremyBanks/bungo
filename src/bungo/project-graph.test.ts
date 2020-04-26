@@ -57,21 +57,21 @@ test("bungo a project", (assert) => {
 
   for (const file of project.fileNodes.values()) {
     if (file.dependencies.size === 0 && file.dependents.size === 0) {
-      console.warn(`${file.originalPath} isn't connected to any other files.`);
+      console.log(`${file.originalPath} isn't connected to any other files.`);
     } else {
       if (file.dependencies.size === 0) {
-        console.info(`${file.originalPath} is a leaf, with dependents:`);
+        console.log(`${file.originalPath} is a leaf, with dependents:`);
       } else if (file.dependents.size === 0) {
-        console.info(`${file.originalPath} is a root, with dependencies:`);
+        console.log(`${file.originalPath} is a root, with dependencies:`);
       } else {
-        console.info(
+        console.log(
           `${file.originalPath} has both dependents and dependencies:`
         );
       }
 
       if (file.dependencies.size > 0) {
         for (const dependency of file.dependencies.values()) {
-          console.debug(
+          console.log(
             `  ${file.originalPath.getBasename()} ==> ${
               dependency.originalPath
             }`
@@ -81,13 +81,13 @@ test("bungo a project", (assert) => {
 
       if (file.dependents.size > 0) {
         for (const dependent of file.dependents.values()) {
-          console.debug(
+          console.log(
             `  ${dependent.originalPath} ==> ${file.originalPath.getBasename()}`
           );
         }
       }
     }
 
-    console.debug();
+    console.log();
   }
 });
