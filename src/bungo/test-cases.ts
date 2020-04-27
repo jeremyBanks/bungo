@@ -4,17 +4,12 @@ const cases: Record<
 > = {
   empty: {
     input: {},
-    expectedMoves: {}
   },
 
   "binary orbit": {
     input: {
       "/a.ts": `import "b.ts"`,
       "/b.ts": `import "a.ts"`,
-    },
-    expectedMoves: {
-      "/a.ts": "/a.ts",
-      "/b.ts": "/b.ts",
     },
   },
 
@@ -24,20 +19,17 @@ const cases: Record<
       "/b.ts": `import "c.ts"`,
       "/c.ts": `import "a.ts"`,
     },
-    expectedMoves: {
-      "/a.ts": "/a.ts",
-      "/b.ts": "/b.ts",
-      "/c.ts": "/c.ts",
-    },
   },
 
-  "parent and two": {
+  "with a friend": {
     input: {
-      "/mom.ts": `import "/daughter.ts"`,
-      "/dad.ts": `import "/son.ts"`,
-      "/son.ts": `import "/daughter.ts"`,
-      "/daughter.ts": `import "/son.ts"`,
-    }
+      "/grandparent.ts": `import "/parent.ts"`,
+      "/parent.ts": `import "/son.ts"; import "/daughter.ts";`,
+      "/son.ts": `import "/friend.ts"; import "/daughter.ts"; import "/teacher.ts"`,
+      "/daughter.ts": `import "/son.ts"; import "/teacher.ts"`,
+      "/friend.ts": `import "/son.ts"`,
+      "/teacher.ts": `export {}`,
+    },
   },
 
   "simple project": {
@@ -68,16 +60,6 @@ const cases: Record<
       "/src/property.ts": `
         import "./math-utils.ts";
       `,
-    },
-    expectedMoves: {
-      "/src/tool.ts": "/tool.ts",
-      "/src/math-utils.ts": "/math-utils.ts",
-      "/src/main.ts": "/main.ts",
-      "/src/cli.ts": "/main/cli.ts",
-      "/src/string-utils.ts": "/main/string-utils.ts",
-      "/src/business.ts": "/main/business.ts",
-      "/src/user.ts": "/main/business/user.ts",
-      "/src/property.ts": "/main/business/property.ts",
     },
   },
 };

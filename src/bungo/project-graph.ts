@@ -4,6 +4,12 @@ import { AbsoluteFilePath } from "@romejs/path/index";
 
 import { ArrayElement } from "./useful-types";
 
+const isRelativePath = (path: string) => {
+  return (
+    path.startsWith("./") || path.startsWith("../") || path.startsWith("/")
+  );
+};
+
 export class ProjectGraph {
   private constructor(
     // project root path, imports outside of this will be ignored.
@@ -46,9 +52,7 @@ export class ProjectGraph {
       ) as Array<ImportDeclaration>;
 
       const importedPaths = new Set(
-        imports
-          .map((x) => x.source.value)
-          .filter((x) => x.startsWith("./") || x.startsWith("../"))
+        imports.map((x) => x.source.value).filter(isRelativePath)
       );
 
       const dependencyPaths = new Set(

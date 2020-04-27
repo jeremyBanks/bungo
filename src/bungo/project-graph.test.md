@@ -4,11 +4,55 @@
 
 ## `bungo test cases`
 
+### `0`
+
+```javascript
+Object {}
+```
+
+### `1`
+
 ```javascript
 Object {
-  '/dad.ts': '/dad.ts'
-  '/daughter.ts': '/daughter.ts'
-  '/mom.ts': '/mom.ts'
-  '/son.ts': '/son.ts'
+  '/a.ts': '/a.ts'
+  '/b.ts': '/b.ts'
+}
+```
+
+### `2`
+
+```javascript
+Object {
+  '/a.ts': '/a.ts'
+  '/b.ts': '/b.ts'
+  '/c.ts': '/c.ts'
+}
+```
+
+### `3`
+
+```javascript
+Object {
+  '/daughter.ts': '/grandparent/parent/daughter.ts'
+  '/friend.ts': '/grandparent/parent/son/friend.ts'
+  '/grandparent.ts': '/grandparent.ts'
+  '/parent.ts': '/grandparent/parent.ts'
+  '/son.ts': '/grandparent/parent/son.ts'
+  '/teacher.ts': '/grandparent/parent/teacher.ts'
+}
+```
+
+### `4`
+
+```javascript
+Object {
+  '/src/business.ts': '/main/business.ts'
+  '/src/cli.ts': '/main/cli.ts'
+  '/src/main.ts': '/main.ts'
+  '/src/math-utils.ts': '/math-utils.ts'
+  '/src/property.ts': '/main/business/property.ts'
+  '/src/string-utils.ts': '/main/string-utils.ts'
+  '/src/tool.ts': '/tool.ts'
+  '/src/user.ts': '/main/business/user.ts'
 }
 ```

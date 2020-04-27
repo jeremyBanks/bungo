@@ -8,6 +8,7 @@ import {
 import packageJson from "../package.json";
 
 import { ProjectGraph } from "./bungo/project-graph";
+import testCases from "./bungo/test-cases";
 
 export const main = async (): Promise<undefined | number | void> => {
   const parser = parseCLIFlagsFromProcess({
@@ -57,18 +58,20 @@ export const main = async (): Promise<undefined | number | void> => {
   walkDir(flags.rootPath);
 
   const project = ProjectGraph.fromData({
-    rootPath: flags.rootPath,
-    files: Object.entries(files).map(([path, body]) => ({
-      path: createPath(path).assertAbsolute(),
-      body,
-    })),
+    rootPath: createPath("/").assertAbsolute(), // flags.rootPath,
+    files: Object.entries(testCases["with a friend"].input || files).map(
+      ([path, body]) => ({
+        path: createPath(path).assertAbsolute(),
+        body,
+      })
+    ),
   });
 
   console.log(`
     digraph {
       rankdir=BT
 
-      subgraph {
+      subgraph A {
         ${[...project.dependencyEdges.values()]
           .map(
             (edge) =>
@@ -77,7 +80,7 @@ export const main = async (): Promise<undefined | number | void> => {
           .join("\n")}
       }
 
-      subgraph {
+      subgraph B {
         node [shape=box]
         edge [arrowhead=none]
         ${[...project.fileNodes.values()]
