@@ -37,6 +37,7 @@ export const main = async (): Promise<undefined | number | void> => {
 
   const fs = require("fs");
   const walkDir = (path: AbsoluteFilePath) => {
+    console.log(`// scanning ${path.toString()}`);
     const contents = fs.readdirSync(path.toString(), {
       withFileTypes: true,
     });

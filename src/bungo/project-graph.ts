@@ -41,11 +41,14 @@ export class ProjectGraph {
 
     const dependencyEdges: Set<DependencyEdge> = new Set();
     for (const [path, file] of fileNodesByOriginalPath.entries()) {
+      console.log(`// scanning ${path.toString()}`);
       const program = parseJS({
         sourceType: "module",
+        syntax: ["ts", "jsx"],
         input: file.originalBody,
         path,
       });
+      console.log("// parsed");
 
       const imports = program.body.filter(
         (x) => x.type === "ImportDeclaration"
@@ -62,6 +65,8 @@ export class ProjectGraph {
       );
 
       for (const path of dependencyPaths) {
+        console.warn(`// looking for ${path}`);
+
         let dependency;
         for (const potentialPath of [
           path,
@@ -83,10 +88,10 @@ export class ProjectGraph {
         }
 
         if (!dependency) {
-          continue;
-          throw new Error(
-            `could not find import ${path} from ${file.originalPath.toString()}`
+          console.warn(
+            `// could not find import ${path} from ${file.originalPath.toString()}`
           );
+          continue;
         }
 
         file.dependencies.add(dependency);
@@ -95,9 +100,16 @@ export class ProjectGraph {
       }
     }
 
+    console.log(`// scanning complete. walking all nodes to figure out paths.`);
+
     const fileNodes = new Set(fileNodesByOriginalPath.values());
 
     const walkNode = (node: FileNode, parent?: FileNode) => {
+      console.log(
+        `// ${node.originalPath.toString()} from ${
+          (node.parent && node.parent.originalPath.toString()) || "root"
+        }`
+      );
       if (node.depth === Infinity) {
         // this node hasn't been visited yet.
         node.parent = parent;
@@ -141,7 +153,7 @@ export class ProjectGraph {
           throw new Error("unreachable");
         }
         const newDepth = newParent ? newParent.depth + 1 : 0;
-        if (newDepth !== node.depth || newParent !== node.parent) {
+        if (newDepth < node.depth) {
           node.parent = newParent;
           node.depth = newDepth;
 
@@ -158,9 +170,6 @@ export class ProjectGraph {
     )) {
       walkNode(root);
     }
-
-    // TODO: add .children ?
-
     const updatedPaths: Record<string, string> = {};
 
     const walkUpdatingPaths = (node: FileNode, parentPath: string) => {
@@ -178,8 +187,6 @@ export class ProjectGraph {
     )) {
       walkUpdatingPaths(root, rootPath.toString().replace(/\/$/, ""));
     }
-
-    // TODO: support circular imports (treat them like a single node)
 
     return new ProjectGraph(rootPath, fileNodes, dependencyEdges, updatedPaths);
   }
