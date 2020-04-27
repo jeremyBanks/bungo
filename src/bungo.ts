@@ -58,13 +58,13 @@ export const main = async (): Promise<undefined | number | void> => {
   walkDir(flags.rootPath);
 
   const project = ProjectGraph.fromData({
-    rootPath: createPath("/").assertAbsolute(), // flags.rootPath,
-    files: Object.entries(testCases["with a friend"].input || files).map(
-      ([path, body]) => ({
-        path: createPath(path).assertAbsolute(),
-        body,
-      })
-    ),
+    rootPath: flags.rootPath || createPath("/").assertAbsolute(),
+    files: Object.entries(
+      (flags.rootPath && files) || testCases["with a friend"].input
+    ).map(([path, body]) => ({
+      path: createPath(path).assertAbsolute(),
+      body,
+    })),
   });
 
   console.log(`
